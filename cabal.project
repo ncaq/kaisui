@@ -1,0 +1,6 @@
+packages:
+  kaisui-distributed-process
+
+allow-boot-library-installs: True
+with-compiler: ghc-9.10.1
+index-state: 2025-06-16T11:07:12Z
