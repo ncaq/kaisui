@@ -108,5 +108,6 @@
       "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
       "kaisui.cachix.org-1:4r6+ZZtsY0YS5PkH2k9JorlwjC00vLiUzHNMxbeqBwM="
     ];
+    allow-import-from-derivation = true;
   };
 }
