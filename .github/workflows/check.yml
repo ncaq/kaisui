@@ -1,0 +1,43 @@
+name: check
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  actions: write # キャッシュアクションに必要
+  contents: read # リポジトリコンテンツの読み取り
+
+jobs:
+  main:
+    runs-on: ubuntu-24.04
+    env:
+      LANG: C.UTF-8
+      USER: runner
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            accept-flake-config = true
+          install_options: "--no-daemon"
+      - name: editorconfig-checker
+        run: nix run 'nixpkgs#editorconfig-checker' -- -config .editorconfig-checker.json
+
+  nix-fmt:
+    runs-on: ubuntu-24.04
+    env:
+      LANG: C.UTF-8
+      USER: runner
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            accept-flake-config = true
+          install_options: "--no-daemon"
+      - run: nix fmt -- --ci
