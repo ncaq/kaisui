@@ -23,7 +23,10 @@ jobs:
         with:
           extra_nix_config: |
             accept-flake-config = true
-          install_options: "--no-daemon"
+      - uses: cachix/cachix-action@v16
+        with:
+          name: kaisui
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: editorconfig-checker
         run: nix run 'nixpkgs#editorconfig-checker' -- -config .editorconfig-checker.json
       - run: nix flake check
