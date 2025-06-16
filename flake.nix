@@ -74,6 +74,8 @@
           default = pkgs.mkShell {
             buildInputs = with pkgs; [
               cabal-install
+              fourmolu
+              hlint
             ];
           };
         };
