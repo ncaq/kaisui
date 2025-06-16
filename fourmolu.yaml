@@ -1,0 +1,32 @@
+indentation: 2
+column-limit: 120
+function-arrows: leading
+comma-style: leading
+import-export-style: leading
+record-brace-space: true
+newlines-between-decls: 1
+
+# 演算子のfixityを解決する為の設定
+reexports:
+  # RIO.Preludeがre-exportしている演算子
+  - module RIO exports "base" Control.Applicative
+  - module RIO exports "base" Control.Arrow
+  - module RIO exports "base" Control.Category
+  - module RIO exports "base" Control.DeepSeq
+  - module RIO exports "base" Control.Monad
+  - module RIO exports "base" Data.Bool
+  - module RIO exports "base" Data.Eq
+  - module RIO exports "base" Data.Function
+  - module RIO exports "base" Data.Functor
+  - module RIO exports "base" Data.List
+  - module RIO exports "base" Data.Ord
+  - module RIO exports "base" Data.Semigroup
+  - module RIO exports "base" Prelude
+
+  # その他rioのre-export
+  - module RIO exports "base" Data.List.NonEmpty
+  - module RIO exports "microlens" Lens.Micro
+
+fixities:
+  # sandwichがinfixを定義していない為 `fourmolu --debug` で `Provenance: Nothing` と出力されてしまう
+  - infixl 9 `shouldBe`, `shouldNotBe`, `shouldBeLeft`, `shouldBeRight`, `shouldBeJust`, `shouldBeNothing`
