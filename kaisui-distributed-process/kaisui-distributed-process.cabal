@@ -1,0 +1,64 @@
+cabal-version: 3.0
+name: kaisui-distributed-process
+version: 0.1.0.0
+license: Apache-2.0
+license-file: LICENSE
+author: ncaq
+maintainer: ncaq@ncaq.net
+category: Control
+build-type: Simple
+
+common basic
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -Wredundant-constraints
+    -j
+
+  default-language: GHC2021
+  default-extensions:
+    DataKinds
+    DefaultSignatures
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    FunctionalDependencies
+    GADTs
+    LambdaCase
+    MultiWayIf
+    NoFieldSelectors
+    NoImportQualifiedPost
+    OverloadedStrings
+    PartialTypeSignatures
+    QuasiQuotes
+    RecordWildCards
+    StrictData
+    TemplateHaskell
+    TypeFamilies
+    ViewPatterns
+
+  build-depends:
+    base,
+    template-haskell,
+
+library
+  import: basic
+  hs-source-dirs: src
+  -- cabal-gild: discover ./src
+  exposed-modules: MyLib
+
+executable kaisui-distributed-process
+  import: basic
+  hs-source-dirs: app
+  main-is: Main.hs
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
+  build-depends:
+    kaisui-distributed-process

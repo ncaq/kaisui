@@ -37,6 +37,26 @@
             inherit (tool-haskell-language-server.project.hsPkgs.fourmolu.components.exes) fourmolu;
           }
         )
+        (final: prev: {
+          kaisui-distributed-process = final.haskell-nix.cabalProject' {
+            src = ./kaisui-distributed-process;
+            compiler-nix-name = ghc-version;
+            shell = {
+              tools = {
+                cabal = "latest";
+                cabal-gild = "latest";
+                haskell-language-server = "latest";
+              };
+              buildInputs = with prev; [
+                fourmolu
+                (writeScriptBin "haskell-language-server-wrapper" ''
+                  #!${stdenv.shell}
+                  exec haskell-language-server "$@"
+                '')
+              ];
+            };
+          };
+        })
       ];
     in
     flake-utils.lib.eachSystem [ flake-utils.lib.system.x86_64-linux ] (
@@ -64,21 +84,14 @@
             };
           };
         });
+        flake = pkgs.kaisui-distributed-process.flake { };
       in
-      {
-        checks = {
+      flake
+      // {
+        checks = flake.checks // {
           formatting = treefmtEval.config.build.check self;
         };
         formatter = treefmtEval.config.build.wrapper;
-        devShells = {
-          default = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              cabal-install
-              fourmolu
-              hlint
-            ];
-          };
-        };
       }
     );
 
@@ -95,5 +108,6 @@
       "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
       "kaisui.cachix.org-1:4r6+ZZtsY0YS5PkH2k9JorlwjC00vLiUzHNMxbeqBwM="
     ];
+    allow-import-from-derivation = true;
   };
 }
