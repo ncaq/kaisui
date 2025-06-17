@@ -132,6 +132,12 @@ pub struct RegistryActor {
     actors: Arc<Mutex<HashMap<String, ActorRef<TextMessage>>>>,
 }
 
+impl Default for RegistryActor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RegistryActor {
     pub fn new() -> Self {
         Self {

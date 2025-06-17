@@ -2,7 +2,8 @@ module Main
   ( main
   ) where
 
-import qualified Control.Distributed.Kaisui.Server as Kaisui
+import Control.Distributed.Kaisui.Server
+import Data.Convertible
 import System.Environment (getArgs)
 
 main :: IO ()
@@ -16,4 +17,4 @@ main = do
   putStrLn "This server will receive text messages and echo them back."
   putStrLn "Press Ctrl+C to stop."
 
-  Kaisui.runServer host port
+  runServer (convert host) (convert port)

@@ -45,12 +45,14 @@ common basic
     base,
     binary,
     bytestring,
+    convertible,
     distributed-process,
     network,
     network-transport,
     network-transport-tcp,
     template-haskell,
     text,
+    unliftio,
 
 library
   import: basic
@@ -104,4 +106,6 @@ test-suite kaisui-distributed-process-test
 
   type: exitcode-stdio-1.0
   -- cabal-gild: discover ./test --exclude=test/Main.hs
-  other-modules: Control.DistributedSpec
+  other-modules:
+    Control.Distributed.KaisuiSpec
+    Control.DistributedSpec

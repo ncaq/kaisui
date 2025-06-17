@@ -6,13 +6,14 @@ import Control.Distributed.Kaisui.Transport
 import Control.Distributed.Kaisui.Types
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
-import qualified Data.Text as T
+import Data.Convertible
+import Data.Text (Text)
 
 -- | Run a distributed process server
-runServer :: String -> String -> IO ()
+runServer :: Text -> Text -> IO ()
 runServer host port = do
-  putStrLn $ "Starting distributed server on " ++ host ++ ":" ++ port
-  nodeResult <- createNode host port
+  putStrLn $ "Starting distributed server on " ++ convert host ++ ":" ++ convert port
+  nodeResult <- createNode (convert host) (convert port)
   case nodeResult of
     Left err -> putStrLn err
     Right node -> do
@@ -34,9 +35,9 @@ serverLoop :: Process ()
 serverLoop = do
   receiveWait
     [ match $ \(sender, TextMessage msg) -> do
-        say $ "Server received from " ++ show sender ++ ": " ++ T.unpack msg
+        say $ "Server received from " ++ show sender ++ ": " ++ convert msg
         let response = TextMessage ("Echo: " <> msg)
         send sender response
-        say $ "Server sent response: " ++ T.unpack ("Echo: " <> msg)
+        say $ "Server sent response: " ++ convert ("Echo: " <> msg)
         serverLoop
     ]
