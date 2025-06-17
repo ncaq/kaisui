@@ -41,7 +41,7 @@ default-extensions:
   LambdaCase
   MultiWayIf
   NoFieldSelectors
-  NoImplicitPrelude
+  NoImportQualifiedPost
   OverloadedStrings
   PartialTypeSignatures
   QuasiQuotes
@@ -52,41 +52,9 @@ default-extensions:
   ViewPatterns
 ```
 
-### 代替Preludeのrio
+### 優先ライブラリ
 
-代替Preludeとして[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)を採用しています。
-
-他のモジュールより、出来るだけRIOが提供する以下のモジュールを優先してimportしてください。
-
-- RIO
-- RIO.ByteString
-- RIO.ByteString.Lazy
-- RIO.Char
-- RIO.Deque
-- RIO.Directory
-- RIO.File
-- RIO.FilePath
-- RIO.HashMap
-- RIO.HashSet
-- RIO.Lens
-- RIO.List
-- RIO.Map
-- RIO.NonEmpty
-- RIO.Process
-- RIO.Seq
-- RIO.Set
-- RIO.State
-- RIO.Text
-- RIO.Text.Lazy
-- RIO.Time
-- RIO.Vector
-- RIO.Vector.Boxed
-- RIO.Vector.Storable
-- RIO.Vector.Unboxed
-- RIO.Writer
-
-RIOが直接exportしている範囲では足りない場合は、
-RIOが依存していて既にプロジェクトで間接的に依存している以下のパッケージを優先して使ってください。
+以下のライブラリを優先して使ってください。
 
 - bytestring
 - containers
@@ -106,7 +74,7 @@ RIOが依存していて既にプロジェクトで間接的に依存してい�
 - vector
 - unix
 
-他のIO系ライブラリよりunliftioを優先してください。
+特に他のIO系ライブラリよりunliftioを優先してください。
 
 ### convertible
 
