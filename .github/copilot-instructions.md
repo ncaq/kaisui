@@ -22,6 +22,14 @@ cabal-gildも`nix fmt`で実行されます。
 環境構築には[Nix Flakes](https://wiki.nixos.org/wiki/Flakes/ja)を利用しています。
 Nix FlakesでHaskell部分を管理するには[haskell.nix](https://input-output-hk.github.io/haskell.nix/)を使っています。
 
+### ビルド
+
+`cabal build --disable-optimization --enable-tests all`
+
+### テスト
+
+`cabal test --disable-optimization --enable-tests all`
+
 ## Haskell
 
 ### 言語設定
