@@ -1,15 +1,23 @@
 ## 重要コマンド
 
+### 統合チェック
+
+以下のnixコマンドで、プロジェクト全体のフォーマットチェック・ビルド・テストが行えます。
+
+```console
+nix flake check
+```
+
 ### フォーマット
 
 基本的にファイルはツールで自動フォーマットしています。
 
 フォーマットコマンドは引数などを変更せず例示のまま実行してください。
 
-Haskellコードなど、
+HaskellコードやRustコードなど、
 [treefmt-nix](https://github.com/numtide/treefmt-nix)が対応しているファイルは以下のコマンドでフォーマット出来ます。
 
-```
+```console
 nix fmt
 ```
 
@@ -17,18 +25,26 @@ Haskellのモジュールを追加した時や削除した時は、
 [cabal-gild](https://hackage.haskell.org/package/cabal-gild)によるフォーマットで変更を反映する必要があります。
 cabal-gildも`nix fmt`で実行されます。
 
+### ビルド
+
+#### Haskell
+
+```console
+cabal build --disable-optimization --enable-tests all
+```
+
+### テスト
+
+#### Haskell
+
+```console
+cabal test --disable-optimization --enable-tests all
+```
+
 ## 使用する技術スタックやライブラリ
 
 環境構築には[Nix Flakes](https://wiki.nixos.org/wiki/Flakes/ja)を利用しています。
 Nix FlakesでHaskell部分を管理するには[haskell.nix](https://input-output-hk.github.io/haskell.nix/)を使っています。
-
-### ビルド
-
-`cabal build --disable-optimization --enable-tests all`
-
-### テスト
-
-`cabal test --disable-optimization --enable-tests all`
 
 ## Haskell
 
