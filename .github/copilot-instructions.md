@@ -6,10 +6,10 @@
 
 フォーマットコマンドは引数などを変更せず例示のまま実行してください。
 
-Haskellコードなど、
+HaskellコードやRustコードなど、
 [treefmt-nix](https://github.com/numtide/treefmt-nix)が対応しているファイルは以下のコマンドでフォーマット出来ます。
 
-```
+```console
 nix fmt
 ```
 
@@ -19,11 +19,19 @@ cabal-gildも`nix fmt`で実行されます。
 
 ### ビルド
 
-`cabal build --disable-optimization --enable-tests all`
+#### Haskell
+
+```console
+cabal build --disable-optimization --enable-tests all
+```
 
 ### テスト
 
-`cabal test --disable-optimization --enable-tests all`
+#### Haskell
+
+```console
+cabal test --disable-optimization --enable-tests all
+```
 
 ## 使用する技術スタックやライブラリ
 
