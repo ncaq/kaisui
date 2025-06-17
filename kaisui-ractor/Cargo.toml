@@ -1,8 +1,9 @@
 [package]
-name = "kaisui-xtra"
+name = "kaisui-ractor"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-xtra = { version = "0.6.0", features = ["tokio", "wasm_bindgen", "macros"] }
+ractor = "0.13.0"
+async-trait = "0.1"

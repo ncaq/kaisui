@@ -72,11 +72,11 @@
               };
             };
 
-            kaisui-xtra = rustPlatform.buildRustPackage {
-              pname = "kaisui-xtra";
+            kaisui-ractor = rustPlatform.buildRustPackage {
+              pname = "kaisui-ractor";
               version = "0.1.0";
-              src = ./kaisui-xtra;
-              cargoLock.lockFile = ./kaisui-xtra/Cargo.lock;
+              src = ./kaisui-ractor;
+              cargoLock.lockFile = ./kaisui-ractor/Cargo.lock;
             };
           }
         )
@@ -115,7 +115,7 @@
       // {
         checks = flake.checks // {
           formatting = treefmtEval.config.build.check self;
-          inherit (pkgs) kaisui-xtra;
+          inherit (pkgs) kaisui-ractor;
         };
         formatter = treefmtEval.config.build.wrapper;
         devShells = flake.devShells // {
