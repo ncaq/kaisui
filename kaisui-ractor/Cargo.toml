@@ -3,6 +3,18 @@ name = "kaisui-ractor"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "kaisui_ractor"
+path = "src/lib.rs"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 ractor = "0.13.0"
