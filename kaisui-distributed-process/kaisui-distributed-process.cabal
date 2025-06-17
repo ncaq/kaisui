@@ -43,6 +43,8 @@ common basic
 
   build-depends:
     base,
+    distributed-process,
+    network-transport-tcp,
     template-haskell,
 
 library
