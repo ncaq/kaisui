@@ -43,6 +43,9 @@ common basic
 
   build-depends:
     base,
+    distributed-process,
+    network-transport,
+    network-transport-tcp,
     template-haskell,
 
 library
@@ -62,3 +65,23 @@ executable kaisui-distributed-process
 
   build-depends:
     kaisui-distributed-process
+
+test-suite kaisui-distributed-process-test
+  import: basic
+  hs-source-dirs: test
+  main-is: Main.hs
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
+  build-depends:
+    kaisui-distributed-process,
+    sydtest,
+
+  build-tool-depends:
+    sydtest-discover:sydtest-discover
+
+  type: exitcode-stdio-1.0
+  -- cabal-gild: discover ./test --exclude=test/Main.hs
+  other-modules: Control.DistributedSpec
