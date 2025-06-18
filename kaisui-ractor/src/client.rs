@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 server_addr = %server_addr,
                 "=== CLIENT TRANSPORT COMMUNICATION SUCCESS ==="
             );
-            println!("SUCCESS: Received response from server: {}", response);
+            info!(response = %response, "SUCCESS: Received response from server");
         }
         Ok(CommunicationResult::Failed(error_msg)) => {
             error!(
@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 error = %error_msg,
                 "=== CLIENT TRANSPORT COMMUNICATION FAILED ==="
             );
-            println!("FAILED: Communication error: {}", error_msg);
+            error!(error = %error_msg, "FAILED: Communication error");
             return Err(format!("Communication failed: {}", error_msg).into());
         }
         Err(e) => {
@@ -76,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 error = %e,
                 "=== CLIENT TRANSPORT ERROR ==="
             );
-            println!("ERROR: Transport error: {}", e);
+            error!(error = %e, "ERROR: Transport error");
             return Err(format!("Transport error: {}", e).into());
         }
     }

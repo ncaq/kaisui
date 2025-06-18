@@ -35,7 +35,7 @@ impl Actor for RegistryActor {
         _myself: ActorRef<Self::Msg>,
         _args: Self::Arguments,
     ) -> Result<Self::State, ActorProcessingErr> {
-        println!("RegistryActor started");
+        info!("RegistryActor started");
         Ok(())
     }
 

@@ -2,10 +2,11 @@ use crate::actors::{RegistryActor, TextActor};
 use crate::communication::send_text_message;
 use crate::messages::TextMessage;
 use ractor::Actor;
+use tracing::info;
 
 // Test function for ractor text messaging
 pub async fn test_ractor_text_messaging() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    println!("Testing ractor text messaging...");
+    info!("Testing ractor text messaging...");
 
     // Create registry
     let (registry_ref, _registry_handle) = Actor::spawn(None, RegistryActor::new(), ()).await?;
@@ -39,6 +40,6 @@ pub async fn test_ractor_text_messaging() -> Result<(), Box<dyn std::error::Erro
     // Give time for message processing
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
-    println!("Ractor text messaging test completed!");
+    info!("Ractor text messaging test completed!");
     Ok(())
 }

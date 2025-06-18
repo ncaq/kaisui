@@ -1,5 +1,6 @@
 use crate::messages::{CommunicationResult, TextMessage};
 use ractor::{ActorRef, RpcReplyPort};
+use tracing::info;
 
 // Function to send text message between actors
 pub async fn send_text_message(
@@ -13,7 +14,7 @@ pub async fn send_text_message(
     };
 
     to.send_message(message)?;
-    println!("Sent message: {}", content);
+    info!(content = %content, "Sent message");
     Ok(())
 }
 

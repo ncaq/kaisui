@@ -2,6 +2,7 @@ use kaisui_ractor::TextActor;
 use ractor::Actor;
 use std::time::Duration;
 use tokio::process::Command;
+use tracing_test::traced_test;
 
 #[tokio::test]
 async fn test_kaisui_ractor_server_client_communication() {
@@ -102,6 +103,7 @@ async fn test_multiple_clients_to_server() {
 }
 
 #[tokio::test]
+#[traced_test]
 async fn test_text_actor_basic_functionality() {
     // TextActorの基本的な機能をテスト
     let (actor_ref, _handle) =
@@ -110,7 +112,7 @@ async fn test_text_actor_basic_functionality() {
             .expect("Failed to start text actor");
 
     // アクターが正常に作成されたことを確認
-    println!("TextActor created successfully");
+    tracing::info!("TextActor created successfully");
 
     // 短時間待機
     tokio::time::sleep(Duration::from_millis(50)).await;
@@ -118,10 +120,11 @@ async fn test_text_actor_basic_functionality() {
     // アクターを停止
     actor_ref.stop(None);
 
-    println!("TextActor test completed successfully");
+    tracing::info!("TextActor test completed successfully");
 }
 
 #[tokio::test]
+#[traced_test]
 async fn test_multiple_text_actors() {
     // 複数のTextActorを作成してテスト
     let mut actors = Vec::new();
@@ -135,7 +138,7 @@ async fn test_multiple_text_actors() {
         actors.push(actor_ref);
     }
 
-    println!("Created {} text actors", actors.len());
+    tracing::info!("Created {} text actors", actors.len());
     assert_eq!(actors.len(), 3);
 
     // 短時間待機
@@ -146,5 +149,5 @@ async fn test_multiple_text_actors() {
         actor.stop(None);
     }
 
-    println!("Multiple TextActor test completed successfully");
+    tracing::info!("Multiple TextActor test completed successfully");
 }

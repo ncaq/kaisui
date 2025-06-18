@@ -24,9 +24,9 @@ impl Actor for TextActor {
         _args: Self::Arguments,
     ) -> Result<Self::State, ActorProcessingErr> {
         if let Some(name) = &self.name {
-            println!("TextActor '{}' started with ref: {:?}", name, myself);
+            info!(actor_name = %name, actor_ref = ?myself, "TextActor started");
         } else {
-            println!("TextActor started with ref: {:?}", myself);
+            info!(actor_ref = ?myself, "TextActor started");
         }
         Ok(())
     }

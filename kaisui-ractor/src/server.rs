@@ -3,7 +3,7 @@ use ractor::{Actor, ActorRef};
 use std::env;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
-use tracing::{info, instrument, warn};
+use tracing::{error, info, instrument, warn};
 use tracing_subscriber::{self, EnvFilter};
 
 pub struct TcpServerActor {
@@ -70,7 +70,7 @@ impl Actor for TcpServerActor {
         _myself: ActorRef<Self::Msg>,
         _args: Self::Arguments,
     ) -> Result<Self::State, ractor::ActorProcessingErr> {
-        println!("TcpServerActor starting...");
+        info!("TcpServerActor starting...");
         Ok(())
     }
 
@@ -107,9 +107,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         "8080".to_string()
     };
 
-    println!("Starting Rust ractor server on port {}", port);
-    println!("This server will receive text messages and echo them back.");
-    println!("Press Ctrl+C to stop.");
+    info!(port = %port, "Starting Rust ractor server");
+    info!("This server will receive text messages and echo them back.");
+    info!("Press Ctrl+C to stop.");
 
     // Create registry
     let (registry_ref, _registry_handle) = Actor::spawn(None, RegistryActor::new(), ()).await?;
@@ -129,22 +129,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (_tcp_server_ref, _tcp_server_handle) =
         Actor::spawn(None, TcpServerActor::new(server_ref.clone()), ()).await?;
 
-    println!("Server actor started and registered as 'text_server'");
+    info!("Server actor started and registered as 'text_server'");
 
     // Start TCP listener
     let addr = format!("127.0.0.1:{}", port);
     let listener = TcpListener::bind(&addr).await?;
-    println!("TCP server listening on {}", addr);
-    println!("Server ready to receive messages!");
+    info!(address = %addr, "TCP server listening");
+    info!("Server ready to receive messages!");
 
     // Accept connections
     while let Ok((stream, addr)) = listener.accept().await {
-        println!("New connection from: {}", addr);
+        info!(peer_addr = %addr, "New connection");
 
         let tcp_server = TcpServerActor::new(server_ref.clone());
         tokio::spawn(async move {
             if let Err(e) = tcp_server.handle_connection(stream).await {
-                println!("Error handling connection: {}", e);
+                error!(error = %e, "Error handling connection");
             }
         });
     }
