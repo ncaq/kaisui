@@ -1,9 +1,9 @@
-use kaisui_ractor::{TextActor, TextMessage};
-use ractor::{Actor, ActorRef};
+use kaisui_ractor::{CommunicationResult, TextMessage};
+use ractor::{Actor, ActorRef, RpcReplyPort};
 use std::env;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
-use tracing::{Instrument, Level, debug, info, instrument, span};
+use tracing::{Instrument, Level, debug, error, info, instrument, span};
 use tracing_subscriber::{self, EnvFilter};
 
 pub struct TcpClientActor {
@@ -31,16 +31,18 @@ impl Actor for TcpClientActor {
         Ok(())
     }
 
-    #[instrument(skip(self, myself, message, _state), fields(server_addr = %self.server_addr))]
+    #[instrument(skip(self, _myself, message, _state), fields(server_addr = %self.server_addr))]
     async fn handle(
         &self,
-        myself: ActorRef<Self::Msg>,
+        _myself: ActorRef<Self::Msg>,
         message: Self::Msg,
         _state: &mut Self::State,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         match message {
-            TextMessage::Send { from: _, content } => {
-                let span = span!(Level::INFO, "tcp_client_send", content = %content);
+            TextMessage::TcpSend { content, reply } => {
+                let span = span!(Level::INFO, "tcp_client_rpc_send", content = %content);
+                let server_addr = self.server_addr.clone();
+
                 async move {
                     let content_hex = hex::encode(content.as_bytes());
                     info!(
@@ -48,39 +50,98 @@ impl Actor for TcpClientActor {
                         content_length = content.len(),
                         content_bytes = content.len(),
                         content_hex = %content_hex,
-                        server_addr = %self.server_addr,
-                        "Sending message via TCP"
+                        server_addr = %server_addr,
+                        "Attempting TCP RPC communication"
                     );
 
-                    // Connect to server and send message
-                    let mut stream = TcpStream::connect(&self.server_addr).await?;
-                    stream.write_all(content.as_bytes()).await?;
-                    stream.write_all(b"\n").await?;
-                    stream.flush().await?;
+                    let result = async {
+                        // Connect to server with timeout
+                        let connect_result = tokio::time::timeout(
+                            tokio::time::Duration::from_secs(5),
+                            TcpStream::connect(&server_addr)
+                        ).await;
 
-                    // Read response
-                    let mut reader = BufReader::new(stream);
-                    let mut buffer = String::new();
-                    reader.read_line(&mut buffer).await?;
-                    let response = buffer.trim().to_string();
+                        let mut stream = match connect_result {
+                            Ok(Ok(stream)) => {
+                                info!("TCP connection established successfully");
+                                stream
+                            }
+                            Ok(Err(e)) => {
+                                error!(error = %e, "Failed to connect to server");
+                                return CommunicationResult::Failed(format!("Connection failed: {}", e));
+                            }
+                            Err(_) => {
+                                error!("Connection timeout after 5 seconds");
+                                return CommunicationResult::Failed("Connection timeout".to_string());
+                            }
+                        };
 
-                    let response_hex = hex::encode(response.as_bytes());
-                    info!(
-                        response = %response,
-                        response_length = response.len(),
-                        response_bytes = response.len(),
-                        response_hex = %response_hex,
-                        "Received TCP response"
-                    );
+                        // Send message
+                        if let Err(e) = stream.write_all(content.as_bytes()).await {
+                            error!(error = %e, "Failed to write message to stream");
+                            return CommunicationResult::Failed(format!("Write failed: {}", e));
+                        }
+                        if let Err(e) = stream.write_all(b"\n").await {
+                            error!(error = %e, "Failed to write newline to stream");
+                            return CommunicationResult::Failed(format!("Write newline failed: {}", e));
+                        }
+                        if let Err(e) = stream.flush().await {
+                            error!(error = %e, "Failed to flush stream");
+                            return CommunicationResult::Failed(format!("Flush failed: {}", e));
+                        }
 
-                    // Send echo back to local actor
-                    let echo_msg = TextMessage::Echo { content: response };
-                    myself.send_message(echo_msg)?;
+                        info!("Message sent successfully, waiting for response");
 
-                    Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+                        // Read response with timeout
+                        let response_result = tokio::time::timeout(
+                            tokio::time::Duration::from_secs(10),
+                            async {
+                                let mut reader = BufReader::new(stream);
+                                let mut buffer = String::new();
+                                reader.read_line(&mut buffer).await?;
+                                Ok::<String, std::io::Error>(buffer.trim().to_string())
+                            }
+                        ).await;
+
+                        match response_result {
+                            Ok(Ok(response)) => {
+                                let response_hex = hex::encode(response.as_bytes());
+                                info!(
+                                    response = %response,
+                                    response_length = response.len(),
+                                    response_bytes = response.len(),
+                                    response_hex = %response_hex,
+                                    "Received TCP response successfully"
+                                );
+                                CommunicationResult::Success(response)
+                            }
+                            Ok(Err(e)) => {
+                                error!(error = %e, "Failed to read response from server");
+                                CommunicationResult::Failed(format!("Read failed: {}", e))
+                            }
+                            Err(_) => {
+                                error!("Response timeout after 10 seconds");
+                                CommunicationResult::Failed("Response timeout".to_string())
+                            }
+                        }
+                    }.await;
+
+                    // Send result back via RPC reply
+                    match &result {
+                        CommunicationResult::Success(response) => {
+                            info!(response = %response, "=== TCP RPC COMMUNICATION COMPLETED SUCCESSFULLY ===");
+                        }
+                        CommunicationResult::Failed(error_msg) => {
+                            error!(error = %error_msg, "=== TCP RPC COMMUNICATION FAILED ===");
+                        }
+                    }
+
+                    if let Err(e) = reply.send(result) {
+                        error!(error = %e, "Failed to send RPC reply");
+                    }
                 }
                 .instrument(span)
-                .await?;
+                .await;
             }
             TextMessage::Echo { content } => {
                 let span = span!(Level::INFO, "tcp_client_echo", content = %content);
@@ -91,7 +152,7 @@ impl Actor for TcpClientActor {
                         content_length = content.len(),
                         content_bytes = content.len(),
                         content_hex = %content_hex,
-                        "Received echo from server"
+                        "Processing received echo from server"
                     );
                 }
                 .instrument(span)
@@ -131,33 +192,77 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         ),
     };
 
-    println!("Rust ractor client connecting to {}:{}", host, port);
-    println!("Sending message: {}", message);
-
-    // Create local client actor for handling responses
-    let (client_ref, _client_handle) =
-        Actor::spawn(None, TextActor::new(Some("local_client".to_string())), ()).await?;
+    info!(
+        host = %host,
+        port = %port,
+        message = %message,
+        "Rust ractor client starting communication"
+    );
 
     // Create TCP client actor
     let server_addr = format!("{}:{}", host, port);
     let (tcp_client_ref, _tcp_client_handle) =
         Actor::spawn(None, TcpClientActor::new(server_addr), ()).await?;
 
-    println!("Client actor created");
+    info!("TCP client actor created, initiating RPC communication");
 
-    // Send message via TCP
-    let send_msg = TextMessage::Send {
-        from: client_ref.clone(),
+    // Send message via TCP using RPC pattern with manual reply port
+    // Method 1: Manual creation using oneshot channel
+    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+    let reply_port = RpcReplyPort::from(reply_tx);
+
+    // Alternative Method 2: Using call_t! macro (commented out)
+    // let result = ractor::call_t!(tcp_client_ref, TextMessage::TcpSend, 15000, message.clone());
+
+    tcp_client_ref.send_message(TextMessage::TcpSend {
         content: message.clone(),
-    };
+        reply: reply_port,
+    })?;
 
-    println!("Simulating message send...");
-    tcp_client_ref.send_message(send_msg)?;
+    info!("RPC message sent, waiting for response with 15 second timeout");
 
-    // Give time for message processing
-    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+    // Wait for response with timeout
+    let result = tokio::time::timeout(tokio::time::Duration::from_secs(15), reply_rx).await;
 
-    println!("Client would send message successfully!");
+    match result {
+        Ok(Ok(communication_result)) => match communication_result {
+            CommunicationResult::Success(response) => {
+                info!(
+                    original_message = %message,
+                    server_response = %response,
+                    "=== CLIENT COMMUNICATION SUCCESS ==="
+                );
+                println!("SUCCESS: Received response from server: {}", response);
+            }
+            CommunicationResult::Failed(error_msg) => {
+                error!(
+                    original_message = %message,
+                    error = %error_msg,
+                    "=== CLIENT COMMUNICATION FAILED ==="
+                );
+                println!("FAILED: Communication error: {}", error_msg);
+                return Err(format!("Communication failed: {}", error_msg).into());
+            }
+        },
+        Ok(Err(e)) => {
+            error!(
+                original_message = %message,
+                error = %e,
+                "=== CLIENT RPC ACTOR ERROR ==="
+            );
+            println!("ERROR: Actor error: {}", e);
+            return Err(format!("Actor error: {}", e).into());
+        }
+        Err(_) => {
+            error!(
+                original_message = %message,
+                "=== CLIENT RPC TIMEOUT ==="
+            );
+            println!("ERROR: RPC call timed out after 15 seconds");
+            return Err("RPC timeout".into());
+        }
+    }
 
+    info!("Client communication completed successfully");
     Ok(())
 }

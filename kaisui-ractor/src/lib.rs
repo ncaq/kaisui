@@ -4,6 +4,12 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{Instrument, Level, debug, error, info, instrument, span, warn};
 
+#[derive(Debug, Clone)]
+pub enum CommunicationResult {
+    Success(String),
+    Failed(String),
+}
+
 #[derive(Debug)]
 pub enum TextMessage {
     Send {
@@ -20,6 +26,10 @@ pub enum TextMessage {
     Lookup {
         name: String,
         reply: RpcReplyPort<Option<ActorRef<TextMessage>>>,
+    },
+    TcpSend {
+        content: String,
+        reply: RpcReplyPort<CommunicationResult>,
     },
 }
 
@@ -97,6 +107,24 @@ fn log_verbose_message(operation: &str, message: &TextMessage, data: Option<&[u8
                 "Processing Lookup message"
             );
         }
+        TextMessage::TcpSend { content, reply: _ } => {
+            let content_hex = hex::encode(content.as_bytes());
+            let json_repr = serde_json::to_string(&serde_json::json!({
+                "type": "TcpSend",
+                "content": content
+            }))
+            .unwrap_or_else(|_| "JSON serialization failed".to_string());
+
+            info!(
+                message_type = "TcpSend",
+                content = %content,
+                content_length = content.len(),
+                content_bytes = content.len(),
+                content_hex = %content_hex,
+                json_representation = %json_repr,
+                "Processing TcpSend message"
+            );
+        }
     }
 
     if let Some(data) = data {
@@ -108,7 +136,7 @@ fn log_verbose_message(operation: &str, message: &TextMessage, data: Option<&[u8
     }
 }
 
-// Implement Clone manually, excluding the Lookup variant with RpcReplyPort
+// Implement Clone manually, excluding variants with RpcReplyPort
 impl Clone for TextMessage {
     fn clone(&self) -> Self {
         match self {
@@ -125,6 +153,9 @@ impl Clone for TextMessage {
             },
             TextMessage::Lookup { .. } => {
                 panic!("Cannot clone TextMessage::Lookup variant with RpcReplyPort")
+            }
+            TextMessage::TcpSend { .. } => {
+                panic!("Cannot clone TextMessage::TcpSend variant with RpcReplyPort")
             }
         }
     }
@@ -227,6 +258,16 @@ impl Actor for TextActor {
                 async move {
                     // Note: We can't log the full lookup message due to RpcReplyPort constraints
                     info!(name = %name, "Received lookup message");
+                }
+                .instrument(span)
+                .await;
+            }
+            TextMessage::TcpSend { content, reply: _ } => {
+                let span = span!(Level::INFO, "handle_tcp_send_message", content = %content);
+
+                async move {
+                    // Note: TcpSend messages should be handled by TcpClientActor, not TextActor
+                    info!(content = %content, "TcpSend message received by TextActor (should be handled by TcpClientActor)");
                 }
                 .instrument(span)
                 .await;
@@ -339,6 +380,14 @@ impl Actor for RegistryActor {
                             "Failed to send lookup reply"
                         );
                     }
+                }
+                .instrument(span)
+                .await;
+            }
+            TextMessage::TcpSend { content, reply: _ } => {
+                let span = span!(Level::DEBUG, "registry_tcp_send");
+                async move {
+                    info!(content = %content, "Registry received TcpSend message (should be handled by TcpClientActor)");
                 }
                 .instrument(span)
                 .await;
