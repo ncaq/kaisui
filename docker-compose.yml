@@ -1,0 +1,14 @@
+services:
+  haskell-server:
+    build:
+      context: ./kaisui-distributed-process
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8080"
+
+  rust-server:
+    build:
+      context: ./kaisui-ractor
+      dockerfile: Dockerfile
+    ports:
+      - "8091:8080"

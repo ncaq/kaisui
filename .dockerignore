@@ -1,0 +1,5 @@
+**/.direnv/
+**/dist
+**/dist-*
+**/result*
+**/target
