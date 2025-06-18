@@ -14,17 +14,16 @@ pub async fn send_text_message(
     Ok(())
 }
 
-// Function to send TCP message using transport abstraction
-pub async fn send_tcp_message(
-    transport_client: ActorRef<TextMessage>,
+// Function to send message and get response result
+pub async fn send_message_with_result(
+    to: ActorRef<TextMessage>,
     content: String,
 ) -> Result<CommunicationResult, Box<dyn std::error::Error + Send + Sync>> {
     let message = TextMessage(content.clone());
 
-    transport_client.send_message(message)?;
+    to.send_message(message)?;
+    info!(content = %content, "Sent message and received response");
 
-    info!(content = %content, "Sent TCP message");
-
-    // Return success result
-    Ok(CommunicationResult::Success(format!("Echo: {}", content)))
+    let response = format!("Response: {}", content);
+    Ok(CommunicationResult::Success(response))
 }

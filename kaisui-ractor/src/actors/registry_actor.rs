@@ -42,10 +42,8 @@ impl Actor for RegistryActor {
         let span = span!(Level::INFO, "registry_text_message", content = %message.0);
 
         async move {
-            // Verbose logging for received message
             log_verbose_message("REGISTRY_RECEIVED_MESSAGE", &message, None);
 
-            // Registry now just logs text messages it receives
             info!(
                 content = %message.0,
                 content_length = message.0.len(),

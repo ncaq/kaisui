@@ -5,7 +5,6 @@ edition = "2024"
 
 [lib]
 name = "kaisui_ractor"
-path = "src/lib.rs"
 
 [[bin]]
 name = "server"
@@ -18,7 +17,8 @@ path = "src/client.rs"
 [dependencies]
 async-trait = "0.1"
 hex = "0.4"
-ractor = "0.13.0"
+ractor = { version = "0.15", features = ["async-trait", "cluster", "monitors"] }
+ractor_cluster = { version = "0.15", features = ["async-trait", "monitors"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }

@@ -41,19 +41,14 @@ impl Actor for TextActor {
         let span = span!(Level::INFO, "handle_text_message", content = %message.0);
 
         async move {
-            // Verbose logging for received message
             log_verbose_message("RECEIVED_MESSAGE", &message, None);
 
-            // Create echo response
-            let response = format!("Echo: {}", message.0);
-            let echo_msg = TextMessage(response);
-
-            // Verbose logging for processed message
-            log_verbose_message("PROCESSED_MESSAGE", &echo_msg, None);
+            let response = format!("Response: {}", message.0);
 
             info!(
                 original_content = %message.0,
-                response_content = %echo_msg.0,
+                response_content = %response,
+                actor_name = %self.name.as_deref().unwrap_or("unknown"),
                 "Message processed successfully"
             );
         }

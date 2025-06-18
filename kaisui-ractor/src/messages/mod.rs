@@ -1,7 +1,20 @@
+use ractor::BytesConvertable;
+use serde::{Deserialize, Serialize};
 use tracing::{Level, debug, info, span};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextMessage(pub String);
+
+impl BytesConvertable for TextMessage {
+    fn from_bytes(bytes: Vec<u8>) -> Self {
+        let text = String::from_utf8(bytes).unwrap_or_else(|_| "Invalid UTF-8".to_string());
+        TextMessage(text)
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.0.as_bytes().to_vec()
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum CommunicationResult {

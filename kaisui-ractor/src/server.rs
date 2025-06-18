@@ -1,101 +1,10 @@
-use kaisui_ractor::{RegistryActor, TextActor, TextMessage};
-use ractor::{Actor, ActorRef};
+use kaisui_ractor::messages::TextMessage;
+use kaisui_ractor::{TextActor, actors::RegistryActor};
+use ractor::Actor;
+use ractor_cluster::{NodeServer, node::NodeConnectionMode};
 use std::env;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::{TcpListener, TcpStream};
-use tracing::{error, info, instrument, warn};
+use tracing::info;
 use tracing_subscriber::{self, EnvFilter};
-
-pub struct TcpServerActor {
-    server_actor: ActorRef<TextMessage>,
-}
-
-impl TcpServerActor {
-    pub fn new(server_actor: ActorRef<TextMessage>) -> Self {
-        Self { server_actor }
-    }
-
-    #[instrument(skip(self, stream), fields(peer_addr = ?stream.peer_addr().ok()))]
-    async fn handle_connection(
-        &self,
-        mut stream: TcpStream,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let mut reader = BufReader::new(&mut stream);
-        let mut buffer = String::new();
-
-        reader.read_line(&mut buffer).await?;
-        let message = buffer.trim().to_string();
-
-        if !message.is_empty() {
-            let message_bytes = message.as_bytes();
-            let message_hex = hex::encode(message_bytes);
-            let message_bytes_vec: Vec<u8> = message_bytes.to_vec();
-            info!(
-                message = %message,
-                message_length = message.len(),
-                message_bytes = message.len(),
-                message_hex = %message_hex,
-                message_bytes_array = ?message_bytes_vec,
-                "Received TCP message"
-            );
-
-            // Send message to TextActor for processing
-            let text_message = TextMessage(message.clone());
-            if let Err(e) = self.server_actor.send_message(text_message) {
-                error!(error = %e, "Failed to send message to server actor");
-            }
-
-            // Create echo response directly (since TextActor doesn't return responses now)
-            let response = format!("Echo: {}\n", message);
-            let response_bytes = response.as_bytes();
-            let response_hex = hex::encode(&response_bytes[..response_bytes.len() - 1]); // exclude newline for hex
-            let response_bytes_vec: Vec<u8> = response_bytes.to_vec();
-
-            stream.write_all(response_bytes).await?;
-            stream.flush().await?;
-
-            info!(
-                response = %response.trim(),
-                response_length = response.trim().len(),
-                response_bytes = response_bytes.len(),
-                response_hex = %response_hex,
-                response_bytes_array = ?response_bytes_vec,
-                "Sent TCP response"
-            );
-        } else {
-            warn!("Received empty TCP message");
-        }
-
-        Ok(())
-    }
-}
-
-#[ractor::async_trait]
-impl Actor for TcpServerActor {
-    type Msg = TextMessage;
-    type State = ();
-    type Arguments = ();
-
-    async fn pre_start(
-        &self,
-        _myself: ActorRef<Self::Msg>,
-        _args: Self::Arguments,
-    ) -> Result<Self::State, ractor::ActorProcessingErr> {
-        info!("TcpServerActor starting...");
-        Ok(())
-    }
-
-    async fn handle(
-        &self,
-        _myself: ActorRef<Self::Msg>,
-        message: Self::Msg,
-        _state: &mut Self::State,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // Forward text messages to the main server actor
-        self.server_actor.send_message(message)?;
-        Ok(())
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -106,56 +15,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         )
         .init();
 
-    info!("Starting Rust ractor server with verbose logging");
+    info!("Starting ractor server with distributed communication");
     let args: Vec<String> = env::args().collect();
     let port = if args.len() > 2 {
-        // Handle "host port" arguments
-        args[2].clone()
+        args[2].parse::<u16>().unwrap_or(8080)
     } else if args.len() > 1 {
-        // Handle single port argument
-        args[1].clone()
+        args[1].parse::<u16>().unwrap_or(8080)
     } else {
-        "8080".to_string()
+        8080
     };
 
-    info!(port = %port, "Starting Rust ractor server");
-    info!("This server will receive text messages and echo them back.");
+    info!(port = %port, "Starting ractor server");
+    info!("This server will receive distributed messages and process them.");
     info!("Press Ctrl+C to stop.");
 
-    // Create registry
+    // Create registry actor
     let (registry_ref, _registry_handle) = Actor::spawn(None, RegistryActor::new(), ()).await?;
 
-    // Create server actor
+    // Create text processing actor
     let (server_ref, _server_handle) =
         Actor::spawn(None, TextActor::new(Some("text_server".to_string())), ()).await?;
 
-    // Send registration message as text
+    // Send registration message
     let register_msg = TextMessage("register:text_server".to_string());
     registry_ref.send_message(register_msg)?;
 
-    // Create TCP server actor
-    let (_tcp_server_ref, _tcp_server_handle) =
-        Actor::spawn(None, TcpServerActor::new(server_ref.clone()), ()).await?;
+    // Also send a message to the server actor to demonstrate it's working
+    let test_msg = TextMessage("Server is ready for distributed communication".to_string());
+    server_ref.send_message(test_msg)?;
 
-    info!("Server actor started and registered as 'text_server'");
+    info!("Server actors started and registered");
 
-    // Start TCP listener
-    let addr = format!("127.0.0.1:{}", port);
-    let listener = TcpListener::bind(&addr).await?;
-    info!(address = %addr, "TCP server listening");
-    info!("Server ready to receive messages!");
+    // Create and start NodeServer for distributed communication
+    let node_server = NodeServer::new(
+        port,
+        "kaisui_secret_cookie".to_string(),
+        "kaisui_server".to_string(),
+        "localhost".to_string(),
+        None,
+        Some(NodeConnectionMode::Transitive),
+    );
 
-    // Accept connections
-    while let Ok((stream, addr)) = listener.accept().await {
-        info!(peer_addr = %addr, "New connection");
+    let (_node_server_ref, _node_server_handle) = Actor::spawn(None, node_server, ()).await?;
+    info!(port = %port, "Distributed node server started");
 
-        let tcp_server = TcpServerActor::new(server_ref.clone());
-        tokio::spawn(async move {
-            if let Err(e) = tcp_server.handle_connection(stream).await {
-                error!(error = %e, "Error handling connection");
-            }
-        });
+    // Keep the server running
+    loop {
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     }
-
-    Ok(())
 }
