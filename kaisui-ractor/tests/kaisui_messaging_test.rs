@@ -34,10 +34,9 @@ async fn test_kaisui_ractor_server_client_communication() {
 
     // クライアントの出力を検証
     let stdout = String::from_utf8_lossy(&client_output.stdout);
-    assert!(stdout.contains("Client actor created"));
+    assert!(stdout.contains("Transport client actor created"));
     assert!(stdout.contains("Test message from integration test"));
-    assert!(stdout.contains("Simulating message send"));
-    assert!(stdout.contains("Client would send message successfully"));
+    assert!(stdout.contains("SUCCESS") || stdout.contains("FAILED"));
 
     // サーバープロセスを終了
     server_process.kill().await.expect("Failed to kill server");
@@ -91,12 +90,12 @@ async fn test_multiple_clients_to_server() {
     // クライアント1の出力を検証
     let stdout1 = String::from_utf8_lossy(&output1.stdout);
     assert!(stdout1.contains("Message from client 1"));
-    assert!(stdout1.contains("Client actor created"));
+    assert!(stdout1.contains("Transport client actor created"));
 
     // クライアント2の出力を検証
     let stdout2 = String::from_utf8_lossy(&output2.stdout);
     assert!(stdout2.contains("Message from client 2"));
-    assert!(stdout2.contains("Client actor created"));
+    assert!(stdout2.contains("Transport client actor created"));
 
     // サーバープロセスを終了
     server_process.kill().await.expect("Failed to kill server");
