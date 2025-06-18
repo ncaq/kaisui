@@ -1,4 +1,5 @@
-use ractor::{Actor, ActorProcessingErr, ActorRef};
+use ractor::{Actor, ActorProcessingErr, ActorRef, BytesConvertable};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 /// A simple actor that counts messages
@@ -8,9 +9,20 @@ pub struct Counter {
 }
 
 /// Messages that the Counter actor can handle
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CounterMessage {
     Increment,
     GetCount,
+}
+
+impl BytesConvertable for CounterMessage {
+    fn from_bytes(bytes: Vec<u8>) -> Self {
+        serde_json::from_slice(&bytes).unwrap_or(CounterMessage::Increment)
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        serde_json::to_vec(&self).unwrap_or_default()
+    }
 }
 
 #[ractor::async_trait]
