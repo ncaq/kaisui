@@ -5,7 +5,6 @@ edition = "2024"
 
 [lib]
 name = "kaisui_ractor"
-path = "src/lib.rs"
 
 [[bin]]
 name = "server"
