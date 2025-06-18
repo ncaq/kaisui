@@ -1,21 +1,25 @@
 use crate::messages::{CommunicationResult, TextMessage};
-use crate::transport::{Transport, TransportError};
+use crate::transport::TransportError;
 use ractor::{Actor, ActorProcessingErr, ActorRef};
-use tracing::{Instrument, Level, debug, error, info, instrument, span};
+use tracing::{Instrument, Level, info, instrument, span};
 
-// Transport client actor that uses the Transport trait
-pub struct TransportClientActor<T: Transport> {
-    transport: T,
+// Transport client actor - now just processes text messages
+pub struct TransportClientActor;
+
+impl Default for TransportClientActor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
-impl<T: Transport> TransportClientActor<T> {
-    pub fn new(transport: T) -> Self {
-        Self { transport }
+impl TransportClientActor {
+    pub fn new() -> Self {
+        Self
     }
 }
 
 #[ractor::async_trait]
-impl<T: Transport + 'static> Actor for TransportClientActor<T> {
+impl Actor for TransportClientActor {
     type Msg = TextMessage;
     type State = ();
     type Arguments = ();
@@ -36,59 +40,26 @@ impl<T: Transport + 'static> Actor for TransportClientActor<T> {
         message: Self::Msg,
         _state: &mut Self::State,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        match message {
-            TextMessage::TcpSend {
-                address,
-                content,
-                reply,
-            } => {
-                let span = span!(Level::INFO, "transport_client_send", address = %address, content = %content);
-                let transport = &self.transport;
+        let span = span!(Level::INFO, "transport_client_text_message", content = %message.0);
 
-                async move {
-                    // Verbose logging for outgoing message (without creating dummy reply port)
-                    info!(
-                        address = %address,
-                        content = %content,
-                        content_length = content.len(),
-                        content_hex = %hex::encode(content.as_bytes()),
-                        "=== TRANSPORT CLIENT SENDING ==="
-                    );
+        async move {
+            // Verbose logging for received text message
+            info!(
+                content = %message.0,
+                content_length = message.0.len(),
+                content_hex = %hex::encode(message.0.as_bytes()),
+                "=== TRANSPORT CLIENT RECEIVED TEXT MESSAGE ==="
+            );
 
-                    // Use transport abstraction to send data
-                    let result = match transport.send(&address, content.as_bytes()).await {
-                        Ok(response_bytes) => {
-                            let response = String::from_utf8_lossy(&response_bytes).to_string();
-                            info!(
-                                address = %address,
-                                original_content = %content,
-                                response = %response,
-                                "=== TRANSPORT CLIENT SUCCESS ==="
-                            );
-                            CommunicationResult::Success(response)
-                        }
-                        Err(transport_error) => {
-                            error!(
-                                address = %address,
-                                original_content = %content,
-                                error = ?transport_error,
-                                "=== TRANSPORT CLIENT FAILED ==="
-                            );
-                            transport_error.into()
-                        }
-                    };
-
-                    if let Err(e) = reply.send(result) {
-                        error!(error = %e, "Failed to send transport reply");
-                    }
-                }
-                .instrument(span)
-                .await;
-            }
-            _ => {
-                debug!("TransportClientActor received unhandled message");
-            }
+            // Transport client now just processes text messages
+            info!(
+                received_content = %message.0,
+                "Transport client processed text message"
+            );
         }
+        .instrument(span)
+        .await;
+
         Ok(())
     }
 }

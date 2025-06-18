@@ -1,5 +1,5 @@
 use kaisui_ractor::communication::send_tcp_message;
-use kaisui_ractor::{CommunicationResult, TcpTransport, TransportClientActor};
+use kaisui_ractor::{CommunicationResult, TransportClientActor};
 use ractor::Actor;
 use std::env;
 use tracing::{error, info};
@@ -38,16 +38,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         "Rust ractor client starting communication"
     );
 
-    // Create transport client actor with abstracted TCP transport
+    // Create transport client actor
     let server_addr = format!("{}:{}", host, port);
-    let tcp_transport = TcpTransport::new();
     let (transport_client_ref, _transport_client_handle) =
-        Actor::spawn(None, TransportClientActor::new(tcp_transport), ()).await?;
+        Actor::spawn(None, TransportClientActor::new(), ()).await?;
 
-    info!("Transport client actor created with TCP backend, initiating communication");
+    info!("Transport client actor created, initiating communication");
 
     // Send message using transport abstraction
-    let result = send_tcp_message(transport_client_ref, server_addr.clone(), message.clone()).await;
+    let result = send_tcp_message(transport_client_ref, message.clone()).await;
 
     match result {
         Ok(CommunicationResult::Success(response)) => {

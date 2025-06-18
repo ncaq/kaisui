@@ -1,6 +1,6 @@
 use crate::messages::{TextMessage, log_verbose_message};
 use ractor::{Actor, ActorProcessingErr, ActorRef};
-use tracing::{Instrument, Level, error, info, instrument, span};
+use tracing::{Instrument, Level, info, instrument, span};
 
 pub struct TextActor {
     pub name: Option<String>,
@@ -38,86 +38,28 @@ impl Actor for TextActor {
         message: Self::Msg,
         _state: &mut Self::State,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        match message {
-            TextMessage::Send { from, content } => {
-                let span = span!(Level::INFO, "handle_send_message", content = %content);
-                let send_msg = TextMessage::Send {
-                    from: from.clone(),
-                    content: content.clone(),
-                };
+        let span = span!(Level::INFO, "handle_text_message", content = %message.0);
 
-                async move {
-                    // Verbose logging for received message
-                    log_verbose_message("RECEIVED_MESSAGE", &send_msg, None);
+        async move {
+            // Verbose logging for received message
+            log_verbose_message("RECEIVED_MESSAGE", &message, None);
 
-                    // Send echo response back
-                    let response = format!("Echo: {}", content);
-                    let echo_msg = TextMessage::Echo {
-                        content: response.clone(),
-                    };
+            // Create echo response
+            let response = format!("Echo: {}", message.0);
+            let echo_msg = TextMessage(response);
 
-                    // Verbose logging for sending response
-                    log_verbose_message("SENDING_RESPONSE", &echo_msg, None);
+            // Verbose logging for processed message
+            log_verbose_message("PROCESSED_MESSAGE", &echo_msg, None);
 
-                    if let Err(e) = from.send_message(echo_msg) {
-                        error!(
-                            error = %e,
-                            expected = "Successful message send",
-                            received = "Error",
-                            "Failed to send response"
-                        );
-                    } else {
-                        info!("Message exchange completed successfully");
-                    }
-                }
-                .instrument(span)
-                .await;
-            }
-            TextMessage::Echo { content } => {
-                let span = span!(Level::INFO, "handle_echo_message");
-                let echo_msg = TextMessage::Echo { content };
-
-                async move {
-                    log_verbose_message("RECEIVED_ECHO", &echo_msg, None);
-                }
-                .instrument(span)
-                .await;
-            }
-            TextMessage::Register { name, actor_ref } => {
-                let span = span!(Level::INFO, "handle_register_message");
-                let register_msg = TextMessage::Register { name, actor_ref };
-
-                async move {
-                    log_verbose_message("RECEIVED_REGISTER", &register_msg, None);
-                }
-                .instrument(span)
-                .await;
-            }
-            TextMessage::Lookup { name, reply: _ } => {
-                let span = span!(Level::INFO, "handle_lookup_message", name = %name);
-
-                async move {
-                    // Note: We can't log the full lookup message due to RpcReplyPort constraints
-                    info!(name = %name, "Received lookup message");
-                }
-                .instrument(span)
-                .await;
-            }
-            TextMessage::TcpSend {
-                address,
-                content,
-                reply: _,
-            } => {
-                let span = span!(Level::INFO, "handle_tcp_send_message", address = %address, content = %content);
-
-                async move {
-                    // Note: TcpSend messages should be handled by TcpClientActor, not TextActor
-                    info!(address = %address, content = %content, "TcpSend message received by TextActor (should be handled by TcpClientActor)");
-                }
-                .instrument(span)
-                .await;
-            }
+            info!(
+                original_content = %message.0,
+                response_content = %echo_msg.0,
+                "Message processed successfully"
+            );
         }
+        .instrument(span)
+        .await;
+
         Ok(())
     }
 }

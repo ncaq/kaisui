@@ -2,14 +2,9 @@ use ractor::{Actor, ActorProcessingErr, ActorRef};
 use std::time::Duration;
 
 /// A simple actor that counts messages
+#[derive(Default)]
 pub struct Counter {
     pub count: usize,
-}
-
-impl Default for Counter {
-    fn default() -> Self {
-        Self { count: 0 }
-    }
 }
 
 /// Messages that the Counter actor can handle

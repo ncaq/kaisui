@@ -8,7 +8,7 @@ use tracing_test::traced_test;
 async fn test_kaisui_ractor_server_client_communication() {
     // サーバーを別プロセスで起動
     let mut server_process = Command::new("cargo")
-        .args(&["run", "--bin", "server", "--", "127.0.0.1", "9090"])
+        .args(["run", "--bin", "server", "--", "127.0.0.1", "9090"])
         .spawn()
         .expect("Failed to start server process");
 
@@ -17,7 +17,7 @@ async fn test_kaisui_ractor_server_client_communication() {
 
     // クライアントを実行して終了コードをチェック
     let client_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "client",
@@ -54,7 +54,7 @@ async fn test_kaisui_ractor_server_client_communication() {
 async fn test_multiple_clients_to_server() {
     // サーバーを別プロセスで起動
     let mut server_process = Command::new("cargo")
-        .args(&["run", "--bin", "server", "--", "127.0.0.1", "9091"])
+        .args(["run", "--bin", "server", "--", "127.0.0.1", "9091"])
         .spawn()
         .expect("Failed to start server process");
 
@@ -63,7 +63,7 @@ async fn test_multiple_clients_to_server() {
 
     // 複数のクライアントを並行実行
     let client1 = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "client",
@@ -75,7 +75,7 @@ async fn test_multiple_clients_to_server() {
         .output();
 
     let client2 = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "client",
