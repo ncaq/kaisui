@@ -54,9 +54,11 @@ runClientProcess host port message = do
       let sendMsg = TextMessage message
           sendTuple = (self, sendMsg)
           msgBinary = encode sendMsg
-          msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (convert msgBinary :: [Word8])
+          msgBinaryBytes = convert msgBinary :: [Word8]
+          msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) msgBinaryBytes
           tupleBinary = encode sendTuple
-          tupleBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (convert tupleBinary :: [Word8])
+          tupleBinaryBytes = convert tupleBinary :: [Word8]
+          tupleBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) tupleBinaryBytes
 
       say "=== CLIENT SENDING MESSAGE ==="
       say $ "To server PID: " ++ show serverPid
@@ -64,9 +66,11 @@ runClientProcess host port message = do
       say $ "Message content: " ++ convert message
       say "Message type: TextMessage"
       say $ "Message binary (hex): " ++ convert msgBinaryHex
+      say $ "Message binary array: " ++ show msgBinaryBytes
       say $ "Message binary length: " ++ show (LBS.length msgBinary) ++ " bytes"
       say $ "Message show: " ++ show sendMsg
       say $ "Full tuple binary (hex): " ++ convert tupleBinaryHex
+      say $ "Full tuple binary array: " ++ show tupleBinaryBytes
       say $ "Full tuple binary length: " ++ show (LBS.length tupleBinary) ++ " bytes"
       say $ "Full tuple show: " ++ show sendTuple
 
@@ -86,12 +90,14 @@ runClientProcess host port message = do
         Just (TextMessage responseText) -> do
           let responseMsg = TextMessage responseText
               responseBinary = encode responseMsg
-              responseBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (convert responseBinary :: [Word8])
+              responseBinaryBytes = convert responseBinary :: [Word8]
+              responseBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) responseBinaryBytes
 
           say "=== CLIENT RECEIVED RESPONSE ==="
           say $ "Response content: " ++ convert responseText
           say "Response type: TextMessage"
           say $ "Response binary (hex): " ++ convert responseBinaryHex
+          say $ "Response binary array: " ++ show responseBinaryBytes
           say $ "Response binary length: " ++ show (LBS.length responseBinary) ++ " bytes"
           say $ "Response show: " ++ show responseMsg
           say "=== CLIENT-SERVER COMMUNICATION COMPLETED ==="

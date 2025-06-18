@@ -27,12 +27,15 @@ impl TcpServerActor {
         let message = buffer.trim().to_string();
 
         if !message.is_empty() {
-            let message_hex = hex::encode(message.as_bytes());
+            let message_bytes = message.as_bytes();
+            let message_hex = hex::encode(message_bytes);
+            let message_bytes_vec: Vec<u8> = message_bytes.to_vec();
             info!(
                 message = %message,
                 message_length = message.len(),
                 message_bytes = message.len(),
                 message_hex = %message_hex,
+                message_bytes_array = ?message_bytes_vec,
                 "Received TCP message"
             );
 
@@ -40,6 +43,7 @@ impl TcpServerActor {
             let response = format!("Echo: {}\n", message);
             let response_bytes = response.as_bytes();
             let response_hex = hex::encode(&response_bytes[..response_bytes.len() - 1]); // exclude newline for hex
+            let response_bytes_vec: Vec<u8> = response_bytes.to_vec();
 
             stream.write_all(response_bytes).await?;
             stream.flush().await?;
@@ -49,6 +53,7 @@ impl TcpServerActor {
                 response_length = response.trim().len(),
                 response_bytes = response_bytes.len(),
                 response_hex = %response_hex,
+                response_bytes_array = ?response_bytes_vec,
                 "Sent TCP response"
             );
         } else {
