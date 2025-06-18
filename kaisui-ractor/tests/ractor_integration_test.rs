@@ -42,10 +42,10 @@ impl Actor for Counter {
             CounterMessage::Increment => {
                 // Note: In ractor, we can't directly mutate self in handle
                 // This is a simplified test to verify ractor works
-                println!("Increment received");
+                // Increment received
             }
             CounterMessage::GetCount => {
-                println!("GetCount received");
+                // GetCount received
             }
         }
         Ok(())
@@ -73,7 +73,7 @@ async fn test_counter_actor_basic_operations() {
 #[tokio::test]
 async fn test_ractor_actor_framework_basic_functionality() {
     // Comprehensive test that verifies ractor is working in this environment
-    println!("Testing ractor actor framework basic functionality...");
+    // Testing ractor actor framework basic functionality
 
     let (counter, _counter_handle) = Actor::spawn(None, Counter::default(), ())
         .await
@@ -92,5 +92,5 @@ async fn test_ractor_actor_framework_basic_functionality() {
 
     counter.stop(None);
 
-    println!("ractor actor framework is working correctly!");
+    // ractor actor framework is working correctly
 }

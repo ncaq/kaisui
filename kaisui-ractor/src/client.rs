@@ -1,109 +1,9 @@
-use kaisui_ractor::{TextActor, TextMessage};
-use ractor::{Actor, ActorRef};
+use kaisui_ractor::communication::send_tcp_message;
+use kaisui_ractor::{CommunicationResult, TcpTransport, TransportClientActor};
+use ractor::Actor;
 use std::env;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::TcpStream;
-use tracing::{Instrument, Level, debug, info, instrument, span};
-use tracing_subscriber::{self, EnvFilter};
-
-pub struct TcpClientActor {
-    server_addr: String,
-}
-
-impl TcpClientActor {
-    pub fn new(server_addr: String) -> Self {
-        Self { server_addr }
-    }
-}
-
-#[ractor::async_trait]
-impl Actor for TcpClientActor {
-    type Msg = TextMessage;
-    type State = ();
-    type Arguments = ();
-
-    async fn pre_start(
-        &self,
-        _myself: ActorRef<Self::Msg>,
-        _args: Self::Arguments,
-    ) -> Result<Self::State, ractor::ActorProcessingErr> {
-        println!("TcpClientActor starting...");
-        Ok(())
-    }
-
-    #[instrument(skip(self, myself, message, _state), fields(server_addr = %self.server_addr))]
-    async fn handle(
-        &self,
-        myself: ActorRef<Self::Msg>,
-        message: Self::Msg,
-        _state: &mut Self::State,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        match message {
-            TextMessage::Send { from: _, content } => {
-                let span = span!(Level::INFO, "tcp_client_send", content = %content);
-                async move {
-                    let content_hex = hex::encode(content.as_bytes());
-                    info!(
-                        content = %content,
-                        content_length = content.len(),
-                        content_bytes = content.len(),
-                        content_hex = %content_hex,
-                        server_addr = %self.server_addr,
-                        "Sending message via TCP"
-                    );
-
-                    // Connect to server and send message
-                    let mut stream = TcpStream::connect(&self.server_addr).await?;
-                    stream.write_all(content.as_bytes()).await?;
-                    stream.write_all(b"\n").await?;
-                    stream.flush().await?;
-
-                    // Read response
-                    let mut reader = BufReader::new(stream);
-                    let mut buffer = String::new();
-                    reader.read_line(&mut buffer).await?;
-                    let response = buffer.trim().to_string();
-
-                    let response_hex = hex::encode(response.as_bytes());
-                    info!(
-                        response = %response,
-                        response_length = response.len(),
-                        response_bytes = response.len(),
-                        response_hex = %response_hex,
-                        "Received TCP response"
-                    );
-
-                    // Send echo back to local actor
-                    let echo_msg = TextMessage::Echo { content: response };
-                    myself.send_message(echo_msg)?;
-
-                    Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
-                }
-                .instrument(span)
-                .await?;
-            }
-            TextMessage::Echo { content } => {
-                let span = span!(Level::INFO, "tcp_client_echo", content = %content);
-                async move {
-                    let content_hex = hex::encode(content.as_bytes());
-                    info!(
-                        content = %content,
-                        content_length = content.len(),
-                        content_bytes = content.len(),
-                        content_hex = %content_hex,
-                        "Received echo from server"
-                    );
-                }
-                .instrument(span)
-                .await;
-            }
-            _ => {
-                debug!("Received unhandled message type");
-            }
-        }
-        Ok(())
-    }
-}
+use tracing::{error, info};
+use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -131,33 +31,56 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         ),
     };
 
-    println!("Rust ractor client connecting to {}:{}", host, port);
-    println!("Sending message: {}", message);
+    info!(
+        host = %host,
+        port = %port,
+        message = %message,
+        "Rust ractor client starting communication"
+    );
 
-    // Create local client actor for handling responses
-    let (client_ref, _client_handle) =
-        Actor::spawn(None, TextActor::new(Some("local_client".to_string())), ()).await?;
-
-    // Create TCP client actor
+    // Create transport client actor with abstracted TCP transport
     let server_addr = format!("{}:{}", host, port);
-    let (tcp_client_ref, _tcp_client_handle) =
-        Actor::spawn(None, TcpClientActor::new(server_addr), ()).await?;
+    let tcp_transport = TcpTransport::new();
+    let (transport_client_ref, _transport_client_handle) =
+        Actor::spawn(None, TransportClientActor::new(tcp_transport), ()).await?;
 
-    println!("Client actor created");
+    info!("Transport client actor created with TCP backend, initiating communication");
 
-    // Send message via TCP
-    let send_msg = TextMessage::Send {
-        from: client_ref.clone(),
-        content: message.clone(),
-    };
+    // Send message using transport abstraction
+    let result = send_tcp_message(transport_client_ref, server_addr.clone(), message.clone()).await;
 
-    println!("Simulating message send...");
-    tcp_client_ref.send_message(send_msg)?;
+    match result {
+        Ok(CommunicationResult::Success(response)) => {
+            info!(
+                original_message = %message,
+                server_response = %response,
+                server_addr = %server_addr,
+                "=== CLIENT TRANSPORT COMMUNICATION SUCCESS ==="
+            );
+            info!(response = %response, "SUCCESS: Received response from server");
+        }
+        Ok(CommunicationResult::Failed(error_msg)) => {
+            error!(
+                original_message = %message,
+                server_addr = %server_addr,
+                error = %error_msg,
+                "=== CLIENT TRANSPORT COMMUNICATION FAILED ==="
+            );
+            error!(error = %error_msg, "FAILED: Communication error");
+            return Err(format!("Communication failed: {}", error_msg).into());
+        }
+        Err(e) => {
+            error!(
+                original_message = %message,
+                server_addr = %server_addr,
+                error = %e,
+                "=== CLIENT TRANSPORT ERROR ==="
+            );
+            error!(error = %e, "ERROR: Transport error");
+            return Err(format!("Transport error: {}", e).into());
+        }
+    }
 
-    // Give time for message processing
-    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-
-    println!("Client would send message successfully!");
-
+    info!("Client communication completed successfully");
     Ok(())
 }
