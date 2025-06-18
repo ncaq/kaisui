@@ -5,6 +5,7 @@ module Control.Distributed.Kaisui.Transport
 
 import Control.Distributed.Process.Node
 import Network.Transport.TCP
+import RIO
 
 -- | Create a new local node with TCP transport
 createNode :: String -> String -> IO (Either String LocalNode)

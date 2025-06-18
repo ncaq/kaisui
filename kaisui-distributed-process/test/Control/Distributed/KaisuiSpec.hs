@@ -6,10 +6,9 @@ import Control.Distributed.Kaisui.Transport
 import Control.Distributed.Kaisui.Types
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
-import qualified Data.Text as T
+import RIO
+import qualified RIO.Text as T
 import Test.Syd
-import UnliftIO.Async
-import UnliftIO.Concurrent
 
 spec :: Spec
 spec = describe "Kaisui distributed messaging" $ do
@@ -24,7 +23,7 @@ spec = describe "Kaisui distributed messaging" $ do
 
   it "can communicate between actual server and client modules" $ do
     -- サーバーを別スレッドで起動
-    serverAsync <- async $ runServer "127.0.0.1" "8090"
+    serverAsync <- async $ runSimpleApp $ runServer "127.0.0.1" "8090"
 
     -- サーバーの起動を待つ
     threadDelay 1000000 -- 1秒
@@ -32,7 +31,7 @@ spec = describe "Kaisui distributed messaging" $ do
     -- クライアントを実行して結果を検証
     clientResult <- newEmptyMVar :: IO (MVar String)
     clientAsync <- async $ do
-      runClient "127.0.0.1" "8090" "Hello from test client"
+      runSimpleApp $ runClient "127.0.0.1" "8090" "Hello from test client"
       putMVar clientResult ("completed" :: String)
 
     -- クライアントの完了を待つ（タイムアウト付き）

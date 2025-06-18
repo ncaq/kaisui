@@ -7,19 +7,19 @@ import Control.Distributed.Kaisui.Types
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Data.Convertible
-import Data.Text (Text)
 import Network.Transport (EndPointAddress (..))
+import RIO
 
 -- | Run a distributed process client
-runClient :: Text -> Text -> Text -> IO ()
+runClient :: (HasLogFunc env) => Text -> Text -> Text -> RIO env ()
 runClient host port message = do
-  putStrLn $ "Connecting to distributed server at " ++ convert host ++ ":" ++ convert port
-  nodeResult <- createNode "127.0.0.1" "0" -- Use dynamic port for client
+  logInfo $ "Connecting to distributed server at " <> display host <> ":" <> display port
+  nodeResult <- liftIO $ createNode "127.0.0.1" "0" -- Use dynamic port for client
   case nodeResult of
-    Left err -> putStrLn err
+    Left err -> logError $ "Failed to create node: " <> displayShow err
     Right node -> do
-      runProcess node (runClientProcess host port message)
-      closeNodeSafely node
+      liftIO $ runProcess node (runClientProcess host port message)
+      liftIO $ closeNodeSafely node
 
 -- | Client process implementation
 runClientProcess :: Text -> Text -> Text -> Process ()
@@ -43,7 +43,6 @@ runClientProcess host port message = do
   case lookupResult of
     Nothing -> do
       say "Timeout: Could not find server within 5 seconds"
-      liftIO $ putStrLn "Error: Server not found or connection failed"
     Just (WhereIsReply _ (Just serverPid)) -> do
       say $ "Found server process: " ++ show serverPid
       say $ "Sending message: " ++ convert message
@@ -56,10 +55,7 @@ runClientProcess host port message = do
       case responseResult of
         Nothing -> do
           say "Timeout: No response from server"
-          liftIO $ putStrLn "Error: No response received from server"
         Just (TextMessage responseText) -> do
           say $ "Client received response: " ++ convert responseText
-          liftIO $ putStrLn $ "Success! Server response: " ++ convert responseText
     Just (WhereIsReply _ Nothing) -> do
       say "Server process 'text_server' not found on remote node"
-      liftIO $ putStrLn "Error: Server process not registered"

@@ -3,9 +3,7 @@ module Control.Distributed.Kaisui.Types
   ) where
 
 import Data.Binary (Binary)
-import Data.Text (Text)
-import Data.Typeable (Typeable)
-import GHC.Generics (Generic)
+import RIO
 
 -- | Message type for Text communication
 newtype TextMessage = TextMessage Text
