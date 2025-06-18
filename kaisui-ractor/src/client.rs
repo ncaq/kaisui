@@ -3,6 +3,8 @@ use ractor::{Actor, ActorRef};
 use std::env;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
+use tracing::{Instrument, Level, debug, info, instrument, span};
+use tracing_subscriber::{self, EnvFilter};
 
 pub struct TcpClientActor {
     server_addr: String,
@@ -29,6 +31,7 @@ impl Actor for TcpClientActor {
         Ok(())
     }
 
+    #[instrument(skip(self, myself, message, _state), fields(server_addr = %self.server_addr))]
     async fn handle(
         &self,
         myself: ActorRef<Self::Msg>,
@@ -37,29 +40,66 @@ impl Actor for TcpClientActor {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         match message {
             TextMessage::Send { from: _, content } => {
-                println!("Sending message via TCP: {}", content);
+                let span = span!(Level::INFO, "tcp_client_send", content = %content);
+                async move {
+                    let content_hex = hex::encode(content.as_bytes());
+                    info!(
+                        content = %content,
+                        content_length = content.len(),
+                        content_bytes = content.len(),
+                        content_hex = %content_hex,
+                        server_addr = %self.server_addr,
+                        "Sending message via TCP"
+                    );
 
-                // Connect to server and send message
-                let mut stream = TcpStream::connect(&self.server_addr).await?;
-                stream.write_all(content.as_bytes()).await?;
-                stream.write_all(b"\n").await?;
-                stream.flush().await?;
+                    // Connect to server and send message
+                    let mut stream = TcpStream::connect(&self.server_addr).await?;
+                    stream.write_all(content.as_bytes()).await?;
+                    stream.write_all(b"\n").await?;
+                    stream.flush().await?;
 
-                // Read response
-                let mut reader = BufReader::new(stream);
-                let mut buffer = String::new();
-                reader.read_line(&mut buffer).await?;
+                    // Read response
+                    let mut reader = BufReader::new(stream);
+                    let mut buffer = String::new();
+                    reader.read_line(&mut buffer).await?;
+                    let response = buffer.trim().to_string();
 
-                // Send echo back to local actor
-                let echo_msg = TextMessage::Echo {
-                    content: buffer.trim().to_string(),
-                };
-                myself.send_message(echo_msg)?;
+                    let response_hex = hex::encode(response.as_bytes());
+                    info!(
+                        response = %response,
+                        response_length = response.len(),
+                        response_bytes = response.len(),
+                        response_hex = %response_hex,
+                        "Received TCP response"
+                    );
+
+                    // Send echo back to local actor
+                    let echo_msg = TextMessage::Echo { content: response };
+                    myself.send_message(echo_msg)?;
+
+                    Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+                }
+                .instrument(span)
+                .await?;
             }
             TextMessage::Echo { content } => {
-                println!("Received echo from server: {}", content);
+                let span = span!(Level::INFO, "tcp_client_echo", content = %content);
+                async move {
+                    let content_hex = hex::encode(content.as_bytes());
+                    info!(
+                        content = %content,
+                        content_length = content.len(),
+                        content_bytes = content.len(),
+                        content_hex = %content_hex,
+                        "Received echo from server"
+                    );
+                }
+                .instrument(span)
+                .await;
             }
-            _ => {}
+            _ => {
+                debug!("Received unhandled message type");
+            }
         }
         Ok(())
     }
@@ -67,6 +107,14 @@ impl Actor for TcpClientActor {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Initialize tracing
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .init();
+
+    info!("Starting Rust ractor client with verbose logging");
     let args: Vec<String> = env::args().collect();
     let (host, port, message) = match args.len() {
         4 => (args[1].clone(), args[2].clone(), args[3].clone()),

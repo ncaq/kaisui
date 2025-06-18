@@ -3,6 +3,8 @@ use ractor::{Actor, ActorRef};
 use std::env;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
+use tracing::{info, instrument, warn};
+use tracing_subscriber::{self, EnvFilter};
 
 pub struct TcpServerActor {
     server_actor: ActorRef<TextMessage>,
@@ -13,6 +15,7 @@ impl TcpServerActor {
         Self { server_actor }
     }
 
+    #[instrument(skip(self, stream), fields(peer_addr = ?stream.peer_addr().ok()))]
     async fn handle_connection(
         &self,
         mut stream: TcpStream,
@@ -24,14 +27,32 @@ impl TcpServerActor {
         let message = buffer.trim().to_string();
 
         if !message.is_empty() {
-            println!("Received TCP message: {}", message);
+            let message_hex = hex::encode(message.as_bytes());
+            info!(
+                message = %message,
+                message_length = message.len(),
+                message_bytes = message.len(),
+                message_hex = %message_hex,
+                "Received TCP message"
+            );
 
             // Create echo response
             let response = format!("Echo: {}\n", message);
-            stream.write_all(response.as_bytes()).await?;
+            let response_bytes = response.as_bytes();
+            let response_hex = hex::encode(&response_bytes[..response_bytes.len() - 1]); // exclude newline for hex
+
+            stream.write_all(response_bytes).await?;
             stream.flush().await?;
 
-            println!("Sent TCP response: {}", response.trim());
+            info!(
+                response = %response.trim(),
+                response_length = response.trim().len(),
+                response_bytes = response_bytes.len(),
+                response_hex = %response_hex,
+                "Sent TCP response"
+            );
+        } else {
+            warn!("Received empty TCP message");
         }
 
         Ok(())
@@ -67,6 +88,14 @@ impl Actor for TcpServerActor {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Initialize tracing
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .init();
+
+    info!("Starting Rust ractor server with verbose logging");
     let args: Vec<String> = env::args().collect();
     let port = if args.len() > 2 {
         // Handle "host port" arguments
