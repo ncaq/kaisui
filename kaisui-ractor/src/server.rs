@@ -39,7 +39,13 @@ impl TcpServerActor {
                 "Received TCP message"
             );
 
-            // Create echo response
+            // Send message to TextActor for processing
+            let text_message = TextMessage(message.clone());
+            if let Err(e) = self.server_actor.send_message(text_message) {
+                error!(error = %e, "Failed to send message to server actor");
+            }
+
+            // Create echo response directly (since TextActor doesn't return responses now)
             let response = format!("Echo: {}\n", message);
             let response_bytes = response.as_bytes();
             let response_hex = hex::encode(&response_bytes[..response_bytes.len() - 1]); // exclude newline for hex
@@ -85,7 +91,7 @@ impl Actor for TcpServerActor {
         message: Self::Msg,
         _state: &mut Self::State,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // Forward messages to the main server actor
+        // Forward text messages to the main server actor
         self.server_actor.send_message(message)?;
         Ok(())
     }
@@ -123,11 +129,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (server_ref, _server_handle) =
         Actor::spawn(None, TextActor::new(Some("text_server".to_string())), ()).await?;
 
-    // Register server
-    let register_msg = TextMessage::Register {
-        name: "text_server".to_string(),
-        actor_ref: server_ref.clone(),
-    };
+    // Send registration message as text
+    let register_msg = TextMessage("register:text_server".to_string());
     registry_ref.send_message(register_msg)?;
 
     // Create TCP server actor
