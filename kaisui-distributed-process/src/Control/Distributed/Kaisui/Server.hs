@@ -6,8 +6,12 @@ import Control.Distributed.Kaisui.Transport
 import Control.Distributed.Kaisui.Types
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
+import Data.Binary
 import Data.Convertible
 import RIO
+import qualified RIO.ByteString.Lazy as LBS
+import qualified RIO.Text as T
+import Text.Printf
 
 -- | Run a distributed process server
 runServer :: (HasLogFunc env) => Text -> Text -> RIO env ()
@@ -16,9 +20,9 @@ runServer host port = do
   nodeResult <- liftIO $ createNode (convert host) (convert port)
   case nodeResult of
     Left err -> logError $ "Failed to create node: " <> displayShow err
-    Right node -> do
-      liftIO $ runProcess node runServerProcess
-      liftIO $ closeNodeSafely node
+    Right node -> liftIO $ do
+      runProcess node runServerProcess
+      closeNodeSafely node
 
 -- | Server process implementation
 runServerProcess :: Process ()
@@ -33,11 +37,40 @@ runServerProcess = do
 -- | Main server loop that handles incoming messages
 serverLoop :: Process ()
 serverLoop = do
+  say "=== SERVER WAITING FOR MESSAGES ==="
   receiveWait
     [ match $ \(sender, TextMessage msg) -> do
-        say $ "Server received from " ++ show sender ++ ": " ++ convert msg
+        -- Verbose logging for received message
+        let receivedMsg = TextMessage msg
+            msgBinary = encode receivedMsg
+            msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (convert msgBinary :: [Word8])
+
+        say "=== SERVER RECEIVED MESSAGE ==="
+        say $ "From PID: " ++ show sender
+        say $ "Message content: " ++ convert msg
+        say "Message type: TextMessage"
+        say $ "Binary representation (hex): " ++ convert msgBinaryHex
+        say $ "Binary length: " ++ show (LBS.length msgBinary) ++ " bytes"
+        say $ "Message show: " ++ show receivedMsg
+
+        -- Create and send response with verbose logging
         let response = TextMessage ("Echo: " <> msg)
+            responseBinary = encode response
+            responseBinaryHex =
+              T.intercalate " "
+                $ map
+                  (\w -> convert (printf "%02x" w :: String))
+                  (convert responseBinary :: [Word8])
+
+        say "=== SERVER SENDING RESPONSE ==="
+        say $ "To PID: " ++ show sender
+        say $ "Response content: " ++ convert ("Echo: " <> msg)
+        say "Response type: TextMessage"
+        say $ "Response binary (hex): " ++ convert responseBinaryHex
+        say $ "Response binary length: " ++ show (LBS.length responseBinary) ++ " bytes"
+        say $ "Response show: " ++ show response
+
         send sender response
-        say $ "Server sent response: " ++ convert ("Echo: " <> msg)
+        say "=== MESSAGE EXCHANGE COMPLETED ==="
         serverLoop
     ]
