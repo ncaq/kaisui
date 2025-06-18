@@ -7,18 +7,18 @@ import Control.Distributed.Kaisui.Types
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Data.Convertible
-import Data.Text (Text)
+import RIO
 
 -- | Run a distributed process server
-runServer :: Text -> Text -> IO ()
+runServer :: (HasLogFunc env) => Text -> Text -> RIO env ()
 runServer host port = do
-  putStrLn $ "Starting distributed server on " ++ convert host ++ ":" ++ convert port
-  nodeResult <- createNode (convert host) (convert port)
+  logInfo $ "Starting distributed server on " <> display host <> ":" <> display port
+  nodeResult <- liftIO $ createNode (convert host) (convert port)
   case nodeResult of
-    Left err -> putStrLn err
+    Left err -> logError $ "Failed to create node: " <> displayShow err
     Right node -> do
-      runProcess node runServerProcess
-      closeNodeSafely node
+      liftIO $ runProcess node runServerProcess
+      liftIO $ closeNodeSafely node
 
 -- | Server process implementation
 runServerProcess :: Process ()

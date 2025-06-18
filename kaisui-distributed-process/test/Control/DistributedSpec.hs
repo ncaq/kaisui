@@ -5,6 +5,7 @@ import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Network.Transport (closeTransport)
 import Network.Transport.TCP
+import RIO hiding (newChan)
 import Test.Syd
 
 {- | Helper function to run a distributed process test with automatic transport and node management

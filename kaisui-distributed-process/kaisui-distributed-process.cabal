@@ -31,6 +31,7 @@ common basic
     LambdaCase
     MultiWayIf
     NoFieldSelectors
+    NoImplicitPrelude
     NoImportQualifiedPost
     OverloadedStrings
     PartialTypeSignatures
@@ -50,6 +51,7 @@ common basic
     network,
     network-transport,
     network-transport-tcp,
+    rio,
     template-haskell,
     text,
     unliftio,
