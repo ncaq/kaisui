@@ -65,6 +65,7 @@ default-extensions:
   LambdaCase
   MultiWayIf
   NoFieldSelectors
+  NoImplicitPrelude
   NoImportQualifiedPost
   OverloadedStrings
   PartialTypeSignatures
