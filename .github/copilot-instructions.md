@@ -129,6 +129,13 @@ default-extensions:
 - RIO.Vector.Unboxed
 - RIO.Writer
 
+特に以下のモジュールのimportは禁止です。
+
+- Data.ByteString
+- Data.ByteString.Lazy
+- Data.Text
+- Data.Text.Lazy
+
 RIOが直接exportしている範囲では足りない場合は、
 RIOが依存していて既にプロジェクトで間接的に依存している以下のパッケージを優先して使ってください。
 
