@@ -98,10 +98,43 @@ default-extensions:
   ViewPatterns
 ```
 
-### 優先ライブラリ
+### 代替Preludeのrio
 
-以下のライブラリを優先して使ってください。
+代替Preludeとして[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)を採用しています。
 
+他のモジュールより、出来るだけRIOが提供する以下のモジュールを優先してimportしてください。
+
+- RIO
+- RIO.ByteString
+- RIO.ByteString.Lazy
+- RIO.Char
+- RIO.Deque
+- RIO.Directory
+- RIO.File
+- RIO.FilePath
+- RIO.HashMap
+- RIO.HashSet
+- RIO.Lens
+- RIO.List
+- RIO.Map
+- RIO.NonEmpty
+- RIO.Process
+- RIO.Seq
+- RIO.Set
+- RIO.State
+- RIO.Text
+- RIO.Text.Lazy
+- RIO.Time
+- RIO.Vector
+- RIO.Vector.Boxed
+- RIO.Vector.Storable
+- RIO.Vector.Unboxed
+- RIO.Writer
+
+RIOが直接exportしている範囲では足りない場合は、
+RIOが依存していて既にプロジェクトで間接的に依存している以下のパッケージを優先して使ってください。
+
+- bytestring
 - containers
 - deepseq
 - directory
@@ -110,13 +143,16 @@ default-extensions:
 - hashable
 - mtl
 - primitive
+- text
+- time
 - typed-process
 - unliftio
+- unliftio-core
 - unordered-containers
 - vector
 - unix
 
-特に他のIO系ライブラリよりunliftioを優先してください。
+他のIO系ライブラリよりunliftioを優先してください。
 
 ### [convertible: Typeclasses and instances for converting between types](https://hackage.haskell.org/package/convertible)
 
