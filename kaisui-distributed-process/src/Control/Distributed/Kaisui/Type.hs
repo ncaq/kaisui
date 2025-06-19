@@ -7,6 +7,6 @@ import RIO
 
 -- | Message type for Text communication
 newtype TextMessage = TextMessage Text
-  deriving (Eq, Ord, Read, Show, Generic, Typeable)
+  deriving (Eq, Generic, Ord, Read, Show, Typeable)
 
 instance Binary TextMessage
