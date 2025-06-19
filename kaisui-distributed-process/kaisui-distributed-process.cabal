@@ -62,7 +62,7 @@ library
     Control.Distributed.Kaisui.Client
     Control.Distributed.Kaisui.Server
     Control.Distributed.Kaisui.Transport
-    Control.Distributed.Kaisui.Types
+    Control.Distributed.Kaisui.Type
 
 executable server
   import: basic

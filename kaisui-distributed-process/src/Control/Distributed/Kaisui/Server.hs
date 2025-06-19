@@ -3,7 +3,7 @@ module Control.Distributed.Kaisui.Server
   ) where
 
 import Control.Distributed.Kaisui.Transport
-import Control.Distributed.Kaisui.Types
+import Control.Distributed.Kaisui.Type
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Data.Binary

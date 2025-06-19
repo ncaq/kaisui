@@ -3,7 +3,7 @@ module Control.Distributed.KaisuiSpec (spec) where
 import Control.Distributed.Kaisui.Client (runClient)
 import Control.Distributed.Kaisui.Server (runServer)
 import Control.Distributed.Kaisui.Transport
-import Control.Distributed.Kaisui.Types
+import Control.Distributed.Kaisui.Type
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import RIO
