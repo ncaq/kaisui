@@ -118,8 +118,7 @@ default-extensions:
 
 特に他のIO系ライブラリよりunliftioを優先してください。
 
-### convertible
+### [convertible: Typeclasses and instances for converting between types](https://hackage.haskell.org/package/convertible)
 
-[convertible: Typeclasses and instances for converting between types](https://hackage.haskell.org/package/convertible)パッケージの、
 `convert`関数で汎用的な型変換を行っています。
 `pack`, `unpack`, `encodeUtf8`, `decodeUtf8`のような個別の関数よりなるべく`convert`を使うようにしてください。
