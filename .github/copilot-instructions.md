@@ -134,25 +134,8 @@ default-extensions:
 RIOが直接exportしている範囲では足りない場合は、
 RIOが依存していて既にプロジェクトで間接的に依存している以下のパッケージを優先して使ってください。
 
-- bytestring
-- containers
-- deepseq
-- directory
-- exceptions
-- filepath
-- hashable
 - mtl
-- primitive
-- text
-- time
-- typed-process
 - unliftio
-- unliftio-core
-- unordered-containers
-- vector
-- unix
-
-他のIO系ライブラリよりunliftioを優先してください。
 
 ### [convertible: Typeclasses and instances for converting between types](https://hackage.haskell.org/package/convertible)
 
