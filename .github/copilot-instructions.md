@@ -98,9 +98,7 @@ default-extensions:
   ViewPatterns
 ```
 
-### 代替Preludeのrio
-
-代替Preludeとして[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)を採用しています。
+### 代替Preludeの[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)
 
 他のモジュールより、出来るだけRIOが提供する以下のモジュールを優先してimportしてください。
 
