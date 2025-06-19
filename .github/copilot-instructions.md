@@ -188,13 +188,13 @@ import Data.Convertible
 
 ### [lens: Lenses, Folds and Traversals](https://hackage.haskell.org/package/lens)
 
-`makeFieldsId` Template Haskell関数を使ってレコードのフィールドアクセサを定義するときは、
+`makeFieldsId`Template Haskell関数を使ってレコードのフィールドアクセサを定義するときは、
 フィールドにプレフィクスやアンダースコアは付けないでください。
-`NoFieldSelectors` 拡張の力でプレフィクスは不要になっています。
-`makeFieldsId` 関数は完全にフィールド名と同じアクセサを生成します。
+`NoFieldSelectors`拡張の力でプレフィクスは不要になっています。
+`makeFieldsId`関数は完全にフィールド名と同じアクセサを生成します。
 プレフィクスやアンダースコアをつけると奇妙なアクセサが生成されてしまいます。
 
-`makeFieldsId` 関数を使うときは以下のようにimportを行ってください。
+`makeFieldsId`関数を使うときは以下のようにimportを行ってください。
 
 ```haskell
 import Control.Lens (makeFieldsId)
