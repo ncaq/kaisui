@@ -93,4 +93,4 @@ test-suite network-transport-kaisui-test
 
   type: exitcode-stdio-1.0
   -- cabal-gild: discover ./test --exclude=test/Main.hs
-  other-modules:
+  other-modules: Network.Transport.KaisuiSpec
