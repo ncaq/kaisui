@@ -123,3 +123,31 @@ default-extensions:
 [convertible: Typeclasses and instances for converting between types](https://hackage.haskell.org/package/convertible)パッケージの、
 `convert`関数で汎用的な型変換を行っています。
 `pack`, `unpack`, `encodeUtf8`, `decodeUtf8`のような個別の関数よりなるべく`convert`を使うようにしてください。
+
+## kaisui-distributed-process
+
+Haskellで実装されたKaisuiの分散システム実装です。
+Cloud Haskell (`distributed-process`)を使用し、
+Rust実装とのProtocol Bufferによる相互通信をサポートしています。
+
+### 主要技術
+
+- **分散処理**: `distributed-process` (Cloud Haskell)
+- **シリアライゼーション**: Protocol Buffers (`proto3-suite`)
+- **Alternative Prelude**: RIO (ReaderT IO) - 多くの一般的な依存関係を再エクスポート
+
+### 開発ガイドライン
+
+#### 依存関係
+
+- **RIOのimportを優先**: RIOは多くの一般的なモジュール（ByteString、Textなど）を再エクスポートしています
+- **直接依存を避ける**: RIOが提供する場合は`bytestring`、`text`などをcabalファイルに追加しない
+- **`convert`関数を使用**: 型変換には`convertible`パッケージの`convert`を使用
+
+#### コードスタイル
+
+- **小さな関数**: 深いインデントを避けるため、より小さな関数に分割
+
+#### Protocol Buffer統合
+
+- Protoファイルは`proto3-suite`の`compile-proto-file`でコンパイル
