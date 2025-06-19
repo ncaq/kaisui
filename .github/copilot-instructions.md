@@ -123,6 +123,12 @@ default-extensions:
 `convert`関数で汎用的な型変換を行っています。
 `pack`, `unpack`, `encodeUtf8`, `decodeUtf8`のような個別の関数よりなるべく`convert`を使うようにしてください。
 
+convertibleをimportするときは単に以下のように書いてください。
+
+```haskell
+import Data.Convertible
+```
+
 ### [lens: Lenses, Folds and Traversals](https://hackage.haskell.org/package/lens)
 
 `makeFieldsId` Template Haskell関数を使ってレコードのフィールドアクセサを定義するときは、
