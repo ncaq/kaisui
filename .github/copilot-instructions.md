@@ -98,6 +98,15 @@ default-extensions:
   ViewPatterns
 ```
 
+### named importやqualified importを控える
+
+必要が無いときはnamed importやqualified importは控えてください。
+今はhaskell-language-serverがあるので、
+そのlensでどれが何をimportしているのかは簡単に把握できるので、
+コードが複雑に見えて美しくありません。
+
+もちろん命名がコンフリクトした場合は適切に適度に使用してください。
+
 ### 部分関数の禁止
 
 純粋関数なのに例外を頻繁に投げる以下のような関数の使用は禁止です。
@@ -199,6 +208,8 @@ import Data.Convertible
 ```haskell
 import Control.Lens (makeFieldsId)
 ```
+
+`Control.Lens`は`RIO`のexportしているシンボルと衝突しやすいからです。
 
 その他のシンボルが必要になってからシンボルのimportを追加してください。
 RIOと衝突したときは原則としてRIO側のシンボルを優先してください。
