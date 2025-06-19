@@ -47,6 +47,7 @@ common basic
     binary,
     convertible,
     distributed-process,
+    lens,
     network,
     network-transport,
     network-transport-tcp,
@@ -62,8 +63,10 @@ library
   -- cabal-gild: discover ./src
   exposed-modules:
     Control.Distributed.Kaisui.Client
+    Control.Distributed.Kaisui.HasClass
     Control.Distributed.Kaisui.Server
-    Control.Distributed.Kaisui.Type
+    Control.Distributed.Kaisui.TextMessage
+    Control.Distributed.Kaisui.TextMessagePB
 
 executable server
   import: basic

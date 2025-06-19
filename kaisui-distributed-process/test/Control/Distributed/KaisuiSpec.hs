@@ -2,7 +2,7 @@ module Control.Distributed.KaisuiSpec (spec) where
 
 import Control.Distributed.Kaisui.Client (runClient)
 import Control.Distributed.Kaisui.Server (runServer)
-import Control.Distributed.Kaisui.Type
+import Control.Distributed.Kaisui.TextMessage
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Network.Transport.TCP

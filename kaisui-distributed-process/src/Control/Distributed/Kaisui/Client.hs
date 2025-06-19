@@ -2,7 +2,7 @@ module Control.Distributed.Kaisui.Client
   ( runClient
   ) where
 
-import Control.Distributed.Kaisui.Type
+import Control.Distributed.Kaisui.TextMessage
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Data.Binary
@@ -10,6 +10,7 @@ import Data.Convertible
 import Network.Transport (EndPointAddress (..))
 import Network.Transport.TCP
 import RIO
+import qualified RIO.ByteString as BS
 import qualified RIO.ByteString.Lazy as LBS
 import qualified RIO.Text as T
 import Text.Printf
@@ -53,10 +54,10 @@ runClientProcess host port message = do
 
       -- Verbose logging for sending message
       let sendMsg = TextMessage message
-          sendTuple = (self, sendMsg)
-          msgBinary = encode sendMsg
-          msgBinaryBytes = convert msgBinary :: [Word8]
+          msgBinary = convert message
+          msgBinaryBytes = BS.unpack msgBinary
           msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) msgBinaryBytes
+          sendTuple = (self, msgBinary)
           tupleBinary = encode sendTuple
           tupleBinaryBytes = convert tupleBinary :: [Word8]
           tupleBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) tupleBinaryBytes
@@ -68,7 +69,7 @@ runClientProcess host port message = do
       say "Message type: TextMessage"
       say $ "Message binary (hex): " ++ convert msgBinaryHex
       say $ "Message binary array: " ++ show msgBinaryBytes
-      say $ "Message binary length: " ++ show (LBS.length msgBinary) ++ " bytes"
+      say $ "Message binary length: " ++ show (BS.length msgBinary) ++ " bytes"
       say $ "Message show: " ++ show sendMsg
       say $ "Full tuple binary (hex): " ++ convert tupleBinaryHex
       say $ "Full tuple binary array: " ++ show tupleBinaryBytes
@@ -88,10 +89,10 @@ runClientProcess host port message = do
           say "ERROR: No response from server within timeout period"
           say "Expected: TextMessage response"
           say "Received: Nothing (timeout)"
-        Just (TextMessage responseText) -> do
-          let responseMsg = TextMessage responseText
-              responseBinary = encode responseMsg
-              responseBinaryBytes = convert responseBinary :: [Word8]
+        Just (responseBinary :: ByteString) -> do
+          let responseText = convert responseBinary
+              responseMsg = TextMessage responseText
+              responseBinaryBytes = BS.unpack responseBinary
               responseBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) responseBinaryBytes
 
           say "=== CLIENT RECEIVED RESPONSE ==="
@@ -99,8 +100,7 @@ runClientProcess host port message = do
           say "Response type: TextMessage"
           say $ "Response binary (hex): " ++ convert responseBinaryHex
           say $ "Response binary array: " ++ show responseBinaryBytes
-          say $ "Response binary length: " ++ show (LBS.length responseBinary) ++ " bytes"
+          say $ "Response binary length: " ++ show (BS.length responseBinary) ++ " bytes"
           say $ "Response show: " ++ show responseMsg
           say "=== CLIENT-SERVER COMMUNICATION COMPLETED ==="
-    Just (WhereIsReply _ Nothing) -> do
-      say "Server process 'text_server' not found on remote node"
+    Just (WhereIsReply _ Nothing) -> say "Server process 'text_server' not found on remote node"

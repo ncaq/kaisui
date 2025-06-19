@@ -2,14 +2,13 @@ module Control.Distributed.Kaisui.Server
   ( runServer
   ) where
 
-import Control.Distributed.Kaisui.Type
+import Control.Distributed.Kaisui.TextMessage
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
-import Data.Binary
 import Data.Convertible
 import Network.Transport.TCP
 import RIO
-import qualified RIO.ByteString.Lazy as LBS
+import qualified RIO.ByteString as BS
 import qualified RIO.Text as T
 import Text.Printf
 
@@ -40,38 +39,39 @@ serverLoop :: Process ()
 serverLoop = do
   say "=== SERVER WAITING FOR MESSAGES ==="
   receiveWait
-    [ match $ \(sender, TextMessage msg) -> do
+    [ match $ \(sender, bs :: ByteString) -> do
+        -- Decode from Protocol Buffers format
         -- Verbose logging for received message
-        let receivedMsg = TextMessage msg
-            msgBinary = encode receivedMsg
-            msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (convert msgBinary :: [Word8])
+        let msg = convert bs
+            receivedMsg = TextMessage msg
+            msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (BS.unpack bs)
 
         say "=== SERVER RECEIVED MESSAGE ==="
         say $ "From PID: " ++ show sender
         say $ "Message content: " ++ convert msg
         say "Message type: TextMessage"
         say $ "Binary representation (hex): " ++ convert msgBinaryHex
-        say $ "Binary length: " ++ show (LBS.length msgBinary) ++ " bytes"
+        say $ "Binary length: " ++ show (BS.length bs) ++ " bytes"
         say $ "Message show: " ++ show receivedMsg
 
         -- Create and send response with verbose logging
         let response = TextMessage ("Echo: " <> msg)
-            responseBinary = encode response
+            responseBody = response ^. body
             responseBinaryHex =
               T.intercalate " "
                 $ map
                   (\w -> convert (printf "%02x" w :: String))
-                  (convert responseBinary :: [Word8])
+                  (BS.unpack $ convert responseBody)
 
         say "=== SERVER SENDING RESPONSE ==="
         say $ "To PID: " ++ show sender
         say $ "Response content: " ++ convert ("Echo: " <> msg)
         say "Response type: TextMessage"
         say $ "Response binary (hex): " ++ convert responseBinaryHex
-        say $ "Response binary length: " ++ show (LBS.length responseBinary) ++ " bytes"
+        say $ "Response binary length: " ++ show (T.length responseBody) ++ " bytes"
         say $ "Response show: " ++ show response
 
-        send sender response
+        send sender responseBody
         say "=== MESSAGE EXCHANGE COMPLETED ==="
         serverLoop
     ]
