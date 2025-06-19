@@ -50,6 +50,8 @@ common basic
     network,
     network-transport,
     network-transport-tcp,
+    proto3-suite,
+    proto3-wire,
     rio,
     template-haskell,
     unliftio,
