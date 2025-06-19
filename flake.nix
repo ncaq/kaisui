@@ -111,8 +111,21 @@
         flake = pkgs.kaisui-distributed-process.flake { };
         haskellShell = flake.devShells.default;
       in
-      flake
+      (builtins.removeAttrs flake [
+        "ciJobs"
+        "devShell"
+      ])
       // {
+        apps = pkgs.lib.mapAttrs (
+          name: app:
+          app
+          // {
+            meta = {
+              description = "Kaisui distributed process application: ${name}";
+              mainProgram = builtins.baseNameOf app.program;
+            };
+          }
+        ) flake.apps;
         checks = flake.checks // {
           formatting = treefmtEval.config.build.check self;
           inherit (pkgs) kaisui-ractor;
