@@ -45,7 +45,6 @@ common basic
   build-depends:
     base,
     binary,
-    bytestring,
     convertible,
     distributed-process,
     network,
@@ -53,7 +52,6 @@ common basic
     network-transport-tcp,
     rio,
     template-haskell,
-    text,
     unliftio,
 
 library
