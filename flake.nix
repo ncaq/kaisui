@@ -26,7 +26,7 @@
       rust-overlay,
     }:
     let
-      ghc-version = "ghc9101";
+      ghc-version = "ghc9102";
       overlays = [
         haskellNix.overlay
         rust-overlay.overlays.default
