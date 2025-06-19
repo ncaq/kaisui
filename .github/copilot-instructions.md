@@ -98,6 +98,16 @@ default-extensions:
   ViewPatterns
 ```
 
+### 部分関数の禁止
+
+純粋関数なのに例外を頻繁に投げる以下のような関数の使用は禁止です。
+RIOを使うことで基本的に避けられますが、importもしないでください。
+
+- `fromJust`
+- `read`
+
+例えば`read`には`readMaybe`などの安全な代替関数があるので、そちらを使ってください。
+
 ### 代替Preludeの[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)
 
 他のモジュールより、出来るだけRIOが提供する以下のモジュールを優先してimportしてください。
