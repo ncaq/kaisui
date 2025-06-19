@@ -8,9 +8,8 @@ import Network.Transport.TCP
 import RIO hiding (newChan)
 import Test.Syd
 
-{- | Helper function to run a distributed process test with automatic transport and node management
-Uses dynamic port allocation (port "0") to avoid port conflicts
--}
+-- | Helper function to run a distributed process test with automatic transport and node management
+-- Uses dynamic port allocation (port "0") to avoid port conflicts
 withDistributedProcess :: Process () -> IO ()
 withDistributedProcess action = do
   transportResult <- createTransport (defaultTCPAddr "127.0.0.1" "0") defaultTCPParameters

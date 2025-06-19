@@ -1,7 +1,7 @@
 indentation: 2
 column-limit: 120
 function-arrows: leading
-comma-style: leading
 import-export-style: leading
-record-brace-space: true
-newlines-between-decls: 1
+haddock-style: single-line
+sort-constraints: true
+sort-derived-classes: true
