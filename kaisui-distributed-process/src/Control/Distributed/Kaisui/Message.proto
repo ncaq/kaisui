@@ -6,10 +6,3 @@ package kaisui;
 message TextMessage {
   string body = 1;
 }
-
-// Wrapper for distributed-process compatibility
-message KaisuiMessage {
-  oneof payload {
-    TextMessage text_message = 1;
-  }
-}
