@@ -54,7 +54,7 @@ runClientProcess host port message = do
 
       -- Verbose logging for sending message
       let sendMsg = TextMessage message
-          msgBinary = convert message
+          msgBinary = encodeProtobuf sendMsg
           msgBinaryBytes = BS.unpack msgBinary
           msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) msgBinaryBytes
           sendTuple = (self, msgBinary)
@@ -66,7 +66,7 @@ runClientProcess host port message = do
       say $ "To server PID: " ++ show serverPid
       say $ "Client PID: " ++ show self
       say $ "Message content: " ++ convert message
-      say "Message type: TextMessage"
+      say "Message type: TextMessage (Protocol Buffer)"
       say $ "Message binary (hex): " ++ convert msgBinaryHex
       say $ "Message binary array: " ++ show msgBinaryBytes
       say $ "Message binary length: " ++ show (BS.length msgBinary) ++ " bytes"
@@ -90,17 +90,24 @@ runClientProcess host port message = do
           say "Expected: TextMessage response"
           say "Received: Nothing (timeout)"
         Just (responseBinary :: ByteString) -> do
-          let responseText = convert responseBinary
-              responseMsg = TextMessage responseText
-              responseBinaryBytes = BS.unpack responseBinary
-              responseBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) responseBinaryBytes
+          case decodeProtobuf responseBinary of
+            Left err -> do
+              say "=== ERROR DECODING RESPONSE ==="
+              say $ "Error: " ++ err
+              say
+                $ "Binary (hex): "
+                ++ convert (T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (BS.unpack responseBinary))
+            Right responseMsg -> do
+              let responseText = responseMsg ^. body :: Text
+                  responseBinaryBytes = BS.unpack responseBinary
+                  responseBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) responseBinaryBytes
 
-          say "=== CLIENT RECEIVED RESPONSE ==="
-          say $ "Response content: " ++ convert responseText
-          say "Response type: TextMessage"
-          say $ "Response binary (hex): " ++ convert responseBinaryHex
-          say $ "Response binary array: " ++ show responseBinaryBytes
-          say $ "Response binary length: " ++ show (BS.length responseBinary) ++ " bytes"
-          say $ "Response show: " ++ show responseMsg
-          say "=== CLIENT-SERVER COMMUNICATION COMPLETED ==="
+              say "=== CLIENT RECEIVED RESPONSE ==="
+              say $ "Response content: " ++ convert responseText
+              say "Response type: TextMessage (Protocol Buffer)"
+              say $ "Response binary (hex): " ++ convert responseBinaryHex
+              say $ "Response binary array: " ++ show responseBinaryBytes
+              say $ "Response binary length: " ++ show (BS.length responseBinary) ++ " bytes"
+              say $ "Response show: " ++ show responseMsg
+              say "=== CLIENT-SERVER COMMUNICATION COMPLETED ==="
     Just (WhereIsReply _ Nothing) -> say "Server process 'text_server' not found on remote node"
