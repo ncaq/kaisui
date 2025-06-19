@@ -47,9 +47,12 @@ common basic
     binary,
     convertible,
     distributed-process,
+    lens,
     network,
     network-transport,
     network-transport-tcp,
+    proto3-suite,
+    proto3-wire,
     rio,
     template-haskell,
     unliftio,
@@ -60,8 +63,9 @@ library
   -- cabal-gild: discover ./src
   exposed-modules:
     Control.Distributed.Kaisui.Client
+    Control.Distributed.Kaisui.HasClass
     Control.Distributed.Kaisui.Server
-    Control.Distributed.Kaisui.Type
+    Control.Distributed.Kaisui.TextMessage
 
 executable server
   import: basic

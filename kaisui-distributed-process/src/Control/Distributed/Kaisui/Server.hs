@@ -2,14 +2,13 @@ module Control.Distributed.Kaisui.Server
   ( runServer
   ) where
 
-import Control.Distributed.Kaisui.Type
+import Control.Distributed.Kaisui.TextMessage
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
-import Data.Binary
 import Data.Convertible
 import Network.Transport.TCP
 import RIO
-import qualified RIO.ByteString.Lazy as LBS
+import qualified RIO.ByteString as BS
 import qualified RIO.Text as T
 import Text.Printf
 
@@ -40,38 +39,64 @@ serverLoop :: Process ()
 serverLoop = do
   say "=== SERVER WAITING FOR MESSAGES ==="
   receiveWait
-    [ match $ \(sender, TextMessage msg) -> do
-        -- Verbose logging for received message
-        let receivedMsg = TextMessage msg
-            msgBinary = encode receivedMsg
-            msgBinaryHex = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (convert msgBinary :: [Word8])
-
-        say "=== SERVER RECEIVED MESSAGE ==="
-        say $ "From PID: " ++ show sender
-        say $ "Message content: " ++ convert msg
-        say "Message type: TextMessage"
-        say $ "Binary representation (hex): " ++ convert msgBinaryHex
-        say $ "Binary length: " ++ show (LBS.length msgBinary) ++ " bytes"
-        say $ "Message show: " ++ show receivedMsg
-
-        -- Create and send response with verbose logging
-        let response = TextMessage ("Echo: " <> msg)
-            responseBinary = encode response
-            responseBinaryHex =
-              T.intercalate " "
-                $ map
-                  (\w -> convert (printf "%02x" w :: String))
-                  (convert responseBinary :: [Word8])
-
-        say "=== SERVER SENDING RESPONSE ==="
-        say $ "To PID: " ++ show sender
-        say $ "Response content: " ++ convert ("Echo: " <> msg)
-        say "Response type: TextMessage"
-        say $ "Response binary (hex): " ++ convert responseBinaryHex
-        say $ "Response binary length: " ++ show (LBS.length responseBinary) ++ " bytes"
-        say $ "Response show: " ++ show response
-
-        send sender response
-        say "=== MESSAGE EXCHANGE COMPLETED ==="
-        serverLoop
+    [ match $ \(sender, bs :: ByteString) -> handleClientMessage sender bs >> serverLoop
     ]
+
+-- | Handle a single message from a client
+handleClientMessage :: ProcessId -> ByteString -> Process ()
+handleClientMessage sender bs = do
+  case decodeProtobuf bs of
+    Left err -> logDecodeError bs err
+    Right receivedMsg -> processValidMessage sender bs receivedMsg
+
+-- | Log protocol buffer decode error
+logDecodeError :: ByteString -> String -> Process ()
+logDecodeError bs err = do
+  say "=== ERROR DECODING PROTOCOL BUFFER ==="
+  say $ "Error: " ++ err
+  say $ "Binary (hex): " ++ convert (bytesToHex bs)
+
+-- | Process a successfully decoded message
+processValidMessage :: ProcessId -> ByteString -> TextMessage -> Process ()
+processValidMessage sender bs receivedMsg = do
+  let msg = receivedMsg ^. body
+
+  -- Log received message
+  logReceivedMessage sender bs msg receivedMsg
+
+  -- Create and send response
+  let response = TextMessage ("Echo: " <> msg)
+      responseBytes = encodeProtobuf response
+
+  -- Log response
+  logSendingResponse sender msg response responseBytes
+
+  -- Send response
+  send sender responseBytes
+  say "=== MESSAGE EXCHANGE COMPLETED ==="
+
+-- | Log details about a received message
+logReceivedMessage :: ProcessId -> ByteString -> Text -> TextMessage -> Process ()
+logReceivedMessage sender bs msg receivedMsg = do
+  say "=== SERVER RECEIVED MESSAGE ==="
+  say $ "From PID: " ++ show sender
+  say $ "Message content: " ++ convert msg
+  say "Message type: TextMessage"
+  say $ "Binary representation (hex): " ++ convert (bytesToHex bs)
+  say $ "Binary length: " ++ show (BS.length bs) ++ " bytes"
+  say $ "Message show: " ++ show receivedMsg
+
+-- | Log details about a response being sent
+logSendingResponse :: ProcessId -> Text -> TextMessage -> ByteString -> Process ()
+logSendingResponse sender msg response responseBytes = do
+  say "=== SERVER SENDING RESPONSE ==="
+  say $ "To PID: " ++ show sender
+  say $ "Response content: " ++ convert ("Echo: " <> msg)
+  say "Response type: TextMessage (Protocol Buffer)"
+  say $ "Response binary (hex): " ++ convert (bytesToHex responseBytes)
+  say $ "Response binary length: " ++ show (BS.length responseBytes) ++ " bytes"
+  say $ "Response show: " ++ show response
+
+-- | Convert ByteString to hex string representation
+bytesToHex :: ByteString -> Text
+bytesToHex bs = T.intercalate " " $ map (\w -> convert (printf "%02x" w :: String)) (BS.unpack bs)

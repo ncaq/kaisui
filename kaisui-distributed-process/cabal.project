@@ -4,3 +4,16 @@ packages:
 allow-boot-library-installs: True
 with-compiler: ghc-9.10.2
 index-state: 2025-06-15T23:45:16Z
+
+constraints:
+  zlib +bundled-c-zlib
+
+source-repository-package
+  type: git
+  location: https://github.com/awakesecurity/proto3-suite
+  tag: 48bf2701622a6b558eb6658cb23fab139efa34db
+
+source-repository-package
+  type: git
+  location: https://github.com/awakesecurity/proto3-wire
+  tag: d4376fb6f1c1ac03ee8ec5c5793700ca6508ea70
