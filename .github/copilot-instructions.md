@@ -98,6 +98,11 @@ default-extensions:
   ViewPatterns
 ```
 
+特に`NoFieldSelectors`が有効になっていることに注意してください。
+これによりフィールドアクセスに単純な関数を使うことは出来なくなりますが、
+代わりにレコードの同名フィールドが簡単に扱えるようになってプレフィクスをつける必要がなくなります。
+フィールドへのアクセスはlensを使ってください。
+
 ### named importやqualified importを控える
 
 必要が無いときはnamed importやqualified importは控えてください。
