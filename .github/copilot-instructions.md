@@ -122,3 +122,21 @@ default-extensions:
 
 `convert`関数で汎用的な型変換を行っています。
 `pack`, `unpack`, `encodeUtf8`, `decodeUtf8`のような個別の関数よりなるべく`convert`を使うようにしてください。
+
+### [lens: Lenses, Folds and Traversals](https://hackage.haskell.org/package/lens)
+
+`makeFieldsId` Template Haskell関数を使ってレコードのフィールドアクセサを定義するときは、
+フィールドにプレフィクスやアンダースコアは付けないでください。
+`NoFieldSelectors` 拡張の力でプレフィクスは不要になっています。
+`makeFieldsId` 関数は完全にフィールド名と同じアクセサを生成します。
+プレフィクスやアンダースコアをつけると奇妙なアクセサが生成されてしまいます。
+
+`makeFieldsId` 関数を使うときは以下のようにimportを行ってください。
+
+```haskell
+import Control.Lens (makeFieldsId)
+```
+
+その他のシンボルが必要になってからシンボルのimportを追加してください。
+RIOと衝突したときは原則としてRIO側のシンボルを優先してください。
+不要なときはimportしないでください。
