@@ -47,6 +47,23 @@ TCP/IPなどのアドレスを指定して接続することは問題ありま�
 
 C FFIなどのForeign Function Interfaceは直接は使わなくて良いように設計します。
 
+## 通信に使うバイナリフォーマット
+
+[Protocol Buffer](https://protobuf.dev/)
+を使います。
+
+結局どれかのフォーマットに合わせる必要があるのですが、
+ある程度規格が明示的に定義されていて、
+それなりの言語で既にライブラリが存在するものを選ぶのが適切だと考えました。
+
+パフォーマンスを無視してJSONをそのまま使うという選択肢もありますが、
+パフォーマンス以外にも例えばバイナリデータをそのまま扱うことが難しくて、
+しばしばbase64エンコードが行われたり苦しい回避策が必要になったりするので、
+今回はJSONは選ばないことにしました。
+
+また`ractor_cluster`は既にデフォルトでProtocol Bufferを使うので少しはショートカット出来て、
+ractorの設計と実装を参考にしやすくなるという現状の目標依存の理由もあります。
+
 ## distributed-process
 
 [distributed-process: Cloud Haskell: Erlang-style concurrency in Haskell](https://hackage.haskell.org/package/distributed-process)
@@ -60,10 +77,6 @@ C FFIなどのForeign Function Interfaceは直接は使わなくて良いよう�
 [network-transport-tcp: TCP instantiation of Network.Transport](https://hackage.haskell.org/package/network-transport-tcp)
 を使います。
 TCPがある程度シンプルでフォーマット変換時に開発しやすいと思うからです。
-
-[network-transport-zeromq: ZeroMQ backend for network-transport](https://hackage.haskell.org/package/network-transport-zeromq)
-はZeroMQを使う思想は魅力的でしたが開発が放棄されているので諦めます。
-将来的にTCPではなくZeroMQベースに対応する時にこれをforkしたり参考にする可能性はあります。
 
 ## ractor
 

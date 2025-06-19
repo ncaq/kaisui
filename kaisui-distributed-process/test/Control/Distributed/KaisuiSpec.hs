@@ -2,10 +2,10 @@ module Control.Distributed.KaisuiSpec (spec) where
 
 import Control.Distributed.Kaisui.Client (runClient)
 import Control.Distributed.Kaisui.Server (runServer)
-import Control.Distributed.Kaisui.Transport
-import Control.Distributed.Kaisui.Types
+import Control.Distributed.Kaisui.Type
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
+import Network.Transport.TCP
 import RIO
 import qualified RIO.Text as T
 import Test.Syd
@@ -48,10 +48,11 @@ spec = describe "Kaisui distributed messaging" $ do
 
   it "can send and receive TextMessage in same node process" $ do
     -- 同一ノード内でのTextMessage送受信をテスト
-    nodeResult <- createNode "127.0.0.1" "0"
+    nodeResult <- liftIO $ createTransport (defaultTCPAddr "127.0.0.1" "0") defaultTCPParameters
     case nodeResult of
-      Left err -> expectationFailure $ "Failed to create node: " ++ err
-      Right node -> do
+      Left err -> expectationFailure $ "Failed to create node: " ++ show err
+      Right transport -> do
+        node <- newLocalNode transport initRemoteTable
         runProcess node $ do
           self <- getSelfPid
 
@@ -64,17 +65,4 @@ spec = describe "Kaisui distributed messaging" $ do
           liftIO $ receivedText `shouldBe` "Test communication"
           liftIO $ T.length receivedText `shouldBe` 18
 
-        closeNodeSafely node
-
-  it "can create transport node successfully" $ do
-    -- Transport.hsの関数をテスト
-    nodeResult <- createNode "127.0.0.1" "0"
-    case nodeResult of
-      Left err -> expectationFailure $ "Failed to create node: " ++ err
-      Right node -> do
-        -- ノードが正常に作成されたことを確認
-        runProcess node $ do
-          self <- getSelfPid
-          say $ "Node created successfully with PID: " ++ show self
-
-        closeNodeSafely node
+        closeLocalNode node

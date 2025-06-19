@@ -1,4 +1,4 @@
-module Control.Distributed.Kaisui.Types
+module Control.Distributed.Kaisui.Type
   ( TextMessage (..)
   ) where
 

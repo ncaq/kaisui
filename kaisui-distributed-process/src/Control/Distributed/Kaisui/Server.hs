@@ -2,12 +2,12 @@ module Control.Distributed.Kaisui.Server
   ( runServer
   ) where
 
-import Control.Distributed.Kaisui.Transport
-import Control.Distributed.Kaisui.Types
+import Control.Distributed.Kaisui.Type
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Data.Binary
 import Data.Convertible
+import Network.Transport.TCP
 import RIO
 import qualified RIO.ByteString.Lazy as LBS
 import qualified RIO.Text as T
@@ -17,12 +17,13 @@ import Text.Printf
 runServer :: (HasLogFunc env) => Text -> Text -> RIO env ()
 runServer host port = do
   logInfo $ "Starting distributed server on " <> display host <> ":" <> display port
-  nodeResult <- liftIO $ createNode (convert host) (convert port)
+  nodeResult <- liftIO $ createTransport (defaultTCPAddr (convert host) (convert port)) defaultTCPParameters
   case nodeResult of
     Left err -> logError $ "Failed to create node: " <> displayShow err
-    Right node -> liftIO $ do
+    Right transport -> liftIO $ do
+      node <- newLocalNode transport initRemoteTable
       runProcess node runServerProcess
-      closeNodeSafely node
+      closeLocalNode node
 
 -- | Server process implementation
 runServerProcess :: Process ()
