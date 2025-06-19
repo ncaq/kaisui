@@ -111,7 +111,10 @@
         flake = pkgs.kaisui-distributed-process.flake { };
         haskellShell = flake.devShells.default;
       in
-      (builtins.removeAttrs flake [ "devShell" ])
+      (builtins.removeAttrs flake [
+        "ciJobs"
+        "devShell"
+      ])
       // {
         apps = pkgs.lib.mapAttrs (
           name: app:
