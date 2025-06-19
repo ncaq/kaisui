@@ -1,20 +1,11 @@
 ## 重要コマンド
 
-### 統合チェック
-
-以下のnixコマンドで、プロジェクト全体のフォーマットチェック・ビルド・テストが行えます。
-
-```console
-nix flake check
-```
-
 ### フォーマット
 
 基本的にファイルはツールで自動フォーマットしています。
 
-フォーマットコマンドは引数などを変更せず例示のまま実行してください。
+#### nix fmt
 
-HaskellコードやRustコードなど、
 [treefmt-nix](https://github.com/numtide/treefmt-nix)が対応しているファイルは以下のコマンドでフォーマット出来ます。
 
 ```console
@@ -23,7 +14,25 @@ nix fmt
 
 Haskellのモジュールを追加した時や削除した時は、
 [cabal-gild](https://hackage.haskell.org/package/cabal-gild)によるフォーマットで変更を反映する必要があります。
-cabal-gildも`nix fmt`で実行されます。
+cabal-gildは統合されているので`nix fmt`で実行出来ます。
+
+#### cargo
+
+Rustのフォーマットはrustfmtだけはtreefmtが対応していますが、
+他のlinterには対応していないので以下のコマンドでチェックと自動修正を利用してください。
+
+```console
+cargo fix --allow-dirty
+cargo clippy --fix --allow-dirty
+```
+
+### 統合チェック
+
+以下のnixコマンドで、プロジェクト全体のフォーマットチェック・ビルド・テストが行えます。
+
+```console
+nix flake check
+```
 
 ### ビルド
 
@@ -33,12 +42,24 @@ cabal-gildも`nix fmt`で実行されます。
 cabal build --disable-optimization --enable-tests all
 ```
 
+#### Rust
+
+```console
+cargo build
+```
+
 ### テスト
 
 #### Haskell
 
 ```console
 cabal test --disable-optimization --enable-tests all
+```
+
+#### Rust
+
+```console
+cargo test
 ```
 
 ## 使用する技術スタックやライブラリ
@@ -81,7 +102,6 @@ default-extensions:
 
 以下のライブラリを優先して使ってください。
 
-- bytestring
 - containers
 - deepseq
 - directory
@@ -90,11 +110,8 @@ default-extensions:
 - hashable
 - mtl
 - primitive
-- text
-- time
 - typed-process
 - unliftio
-- unliftio-core
 - unordered-containers
 - vector
 - unix
@@ -105,4 +122,4 @@ default-extensions:
 
 [convertible: Typeclasses and instances for converting between types](https://hackage.haskell.org/package/convertible)パッケージの、
 `convert`関数で汎用的な型変換を行っています。
-`encodeUtf8`関数のような個別の関数よりこちらを優先してください。
+`pack`, `unpack`, `encodeUtf8`, `decodeUtf8`のような個別の関数よりなるべく`convert`を使うようにしてください。
