@@ -78,10 +78,6 @@ ractorの設計と実装を参考にしやすくなるという現状の目標�
 を使います。
 TCPがある程度シンプルでフォーマット変換時に開発しやすいと思うからです。
 
-[network-transport-zeromq: ZeroMQ backend for network-transport](https://hackage.haskell.org/package/network-transport-zeromq)
-はZeroMQを使う思想は魅力的でしたが開発が放棄されているので諦めます。
-将来的にTCPではなくZeroMQベースに対応する時にこれをforkしたり参考にする可能性はあります。
-
 ## ractor
 
 Rust側のメッセージパッシングライブラリはたくさんあるようでしたが、
