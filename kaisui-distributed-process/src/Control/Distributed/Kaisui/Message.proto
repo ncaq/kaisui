@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package kaisui;
-
-// TextMessage compatible with ractor's BytesConvertable
-message TextMessage {
-  string body = 1;
-}
