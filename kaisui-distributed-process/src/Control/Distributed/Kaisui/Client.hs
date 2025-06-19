@@ -2,13 +2,13 @@ module Control.Distributed.Kaisui.Client
   ( runClient
   ) where
 
-import Control.Distributed.Kaisui.Transport
 import Control.Distributed.Kaisui.Type
 import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Data.Binary
 import Data.Convertible
 import Network.Transport (EndPointAddress (..))
+import Network.Transport.TCP
 import RIO
 import qualified RIO.ByteString.Lazy as LBS
 import qualified RIO.Text as T
@@ -18,12 +18,13 @@ import Text.Printf
 runClient :: (HasLogFunc env) => Text -> Text -> Text -> RIO env ()
 runClient host port message = do
   logInfo $ "Connecting to distributed server at " <> display host <> ":" <> display port
-  nodeResult <- liftIO $ createNode "127.0.0.1" "0" -- Use dynamic port for client
+  nodeResult <- liftIO $ createTransport (defaultTCPAddr "127.0.0.1" "0") defaultTCPParameters -- Use dynamic port for client
   case nodeResult of
     Left err -> logError $ "Failed to create node: " <> displayShow err
-    Right node -> liftIO $ do
+    Right transport -> liftIO $ do
+      node <- newLocalNode transport initRemoteTable
       runProcess node (runClientProcess host port message)
-      closeNodeSafely node
+      closeLocalNode node
 
 -- | Client process implementation
 runClientProcess :: Text -> Text -> Text -> Process ()

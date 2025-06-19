@@ -61,7 +61,6 @@ library
   exposed-modules:
     Control.Distributed.Kaisui.Client
     Control.Distributed.Kaisui.Server
-    Control.Distributed.Kaisui.Transport
     Control.Distributed.Kaisui.Type
 
 executable server
