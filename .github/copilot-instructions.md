@@ -336,6 +336,11 @@ mutableな変数を表す型は使わないでください。
 { foo = foo' }
 ```
 
+### 関数の最後の値は捨てない
+
+わざわざ関数の最後で`pure ()`や`return ()`や`void`を使って値を捨てるのは禁止です。
+特に理由がないならば最後の関数の値を捨てないように型の方を合わせてください。
+
 ### 代替Preludeの[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)
 
 他のモジュールより、出来るだけRIOが提供する以下のモジュールを優先してimportしてください。
