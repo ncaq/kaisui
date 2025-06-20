@@ -376,11 +376,22 @@ import Data.Convertible
 
 ### [lens: Lenses, Folds and Traversals](https://hackage.haskell.org/package/lens)
 
-`makeFieldsId` Template Haskell関数を使ってレコードのフィールドアクセサを定義するときは、
-フィールドにプレフィクスやアンダースコアは付けないでください。
+`makeFieldsId`というTemplate Haskell関数を使ってレコードのフィールドアクセサを定義してください。
+
+`makeFieldsId`を使うときはフィールドにプレフィクスやアンダースコアは付けないでください。
 `NoFieldSelectors`拡張の力でプレフィクスは不要になっています。
-`makeFieldsId`関数は完全にフィールド名と同じアクセサを生成します。
-プレフィクスやアンダースコアをつけると奇妙なアクセサが生成されてしまいます。
+`makeFieldsId`関数は完全にフィールド名と同じアクセサを生成するので、
+プレフィクスやアンダースコアをつけると奇妙なアクセサが生成されてしまうのでむしろよくありません。
+フィールド名にアンダースコアを使うのは禁止。
+
+`makeFieldsId`は実行する段階で既に型クラスの定義が見えれば、
+型クラスの重複定義はせず、
+既に存在する型クラスのインスタンスとしてアクセサを定義します。
+
+そのため型クラスの重複を怖がってimportを少なくする必要はありません。
+むしろ積極的に既存の型クラスをimportしてください。
+循環参照などが発生した場合は型クラスの定義だけを別のモジュールに分割して、
+双方それをimportするのも手です。
 
 `makeFieldsId`関数を使うときは以下のようにimportを行ってください。
 
@@ -388,7 +399,7 @@ import Data.Convertible
 import Control.Lens (makeFieldsId)
 ```
 
-`Control.Lens`は`RIO`のexportしているシンボルと衝突しやすいからです。
+`Control.Lens`は`RIO`のexportしているシンボルと衝突しやすいから特別にnamed importを推奨しています。
 
 その他のシンボルが必要になってからシンボルのimportを追加してください。
 RIOと衝突したときは原則としてRIO側のシンボルを優先してください。
