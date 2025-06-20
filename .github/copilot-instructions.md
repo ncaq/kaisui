@@ -185,6 +185,55 @@ RIOを使うことで基本的に避けられますが、importもしないで�
 存在しないというデータが正常系として扱われるので、
 その場合は`IO (Maybe a)`のようなシグネチャを使うことは適切です。
 
+### `IO`をなるべく直接使わず型クラスを使う
+
+`IO`モナドはあまりにもプリミティブなので他のモナド変換子などと一緒に取り扱うのが不便です。
+出来る限り`MonadIO`, `MonadUnliftIO`と言った型クラスで抽象化するべきです。
+
+#### `RIO`モナドを更に抽象化する
+
+実際にどういう型に実行時に具体的になるかと言うと、基本的には以下の`RIO`型になります。
+
+```haskell
+newtype RIO env a = RIO { unRIO :: ReaderT env IO a }
+```
+
+しかし`RIO`も直接使うのは推奨されません。
+以下のようにより抽象的で汎用的な型クラスを使っておくと`RIO`を使っていないプロジェクトからも再利用が容易になります。
+
+```haskell
+foo :: (MonadUnliftIO m, MonadReader env m, HasLogFunc env, MonadThrow m) => m ()
+```
+
+具体的な型を使わないと最適化が効きにくい時もありますが、
+早すぎる最適化は悪なので、
+パフォーマンスチューニングをする時だけ具体的な型を使って調整します。
+
+#### `RIO`の実行
+
+`RIO`を実行して`IO`空間に変換する方法を説明します。
+
+ロガーぐらいしか持たないシンプルな`env`しか使わない場合は、
+[RIO.Prelude.Simple](https://hackage.haskell.org/package/rio/docs/RIO-Prelude-Simple.html)
+に定義されている`runSimpleApp`関数で実行するだけで十分です。
+
+```haskell
+runSimpleApp :: MonadIO m => RIO SimpleApp a -> m a
+```
+
+複雑な文脈を持つモジュールの例では、
+これに対して以下のように`ReaderT`が要求する`env`を作成して実行する。
+
+```haskell
+runEnv :: (MonadUnliftIO m, MonadThrow m) => RIO Env a -> m a
+runEnv = do
+  let isVerbose = False
+  logOptions <- logOptionsHandle stderr isVerbose
+  withLogFunc logOptions $ \lf -> do
+    let env = -- ここで実際にアプリケーションに固有の文脈を作成する。
+    runRIO env action
+```
+
 ### `String`の使用をなるべく避ける
 
 `String`は`[Char]`のエイリアスであり、
