@@ -103,10 +103,12 @@ test-suite network-transport-kaisui-test
   import: basic
   hs-source-dirs: test
   main-is: Main.hs
+  -- QuickCheckのインスタンスを定義する必要があるので仕方なく孤立インスタンスの警告を無効化している。
   ghc-options:
     -threaded
     -rtsopts
     -with-rtsopts=-N
+    -Wno-orphans
 
   build-depends:
     QuickCheck,
