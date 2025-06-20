@@ -57,6 +57,7 @@ common basic
     exceptions,
     hashable,
     lens,
+    megaparsec,
     mtl,
     network,
     network-transport,
