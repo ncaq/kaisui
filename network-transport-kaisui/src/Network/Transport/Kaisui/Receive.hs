@@ -7,10 +7,10 @@ import qualified Network.Transport as NT
 import Network.Transport.Kaisui.Connection
 import Network.Transport.Kaisui.Error
 import Network.Transport.Kaisui.Protocol
-import Network.Transport.Kaisui.Type.Connection as CT
-import Network.Transport.Kaisui.Type.EndPoint as EP
+import Network.Transport.Kaisui.Type.Connection
+import Network.Transport.Kaisui.Type.EndPoint
 import qualified Proto.Kaisui.DataMessage as DM
-import Proto.Kaisui.Envelope as E
+import Proto.Kaisui.Envelope
 import RIO
 import qualified RIO.ByteString as BS
 import qualified RIO.HashMap as HM
@@ -21,7 +21,7 @@ connectionReceiveLoop
 connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: SomeException))
  where
   handleLoop = forever $ do
-    bs <- liftIO $ NSB.recv (conn ^. CT.socket) 4096
+    bs <- liftIO $ NSB.recv (conn ^. socket) 4096
     if BS.null bs
       then handleConnectionClosed
       else handleReceivedData bs
@@ -30,7 +30,7 @@ connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: 
     logDebug $ "Connection receive error: " <> displayShow e
     cleanupConnection
     throwM e -- Re-throw to properly exit the thread
-  connId = conn ^. CT.connectionId
+  connId = conn ^. connectionId
   -- Handle connection closed by peer
   handleConnectionClosed = do
     logDebug $ "Connection closed by peer: " <> displayShow connId
@@ -46,11 +46,11 @@ connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: 
   -- Handle decoded envelope
   handleEnvelope :: (MonadIO m, MonadThrow m) => Envelope -> m ()
   handleEnvelope envelope =
-    case envelope ^. E.message of
+    case envelope ^. message of
       Just (DataMessageMessage msg) ->
-        atomically $
-          writeTBQueue (ep ^. EP.receiveQueue) $
-            NT.Received connId [msg ^. DM.payload]
+        atomically
+          $ writeTBQueue (ep ^. receiveQueue)
+          $ NT.Received connId [msg ^. DM.payload]
       Just (CloseConnectionMessage _) -> do
         cleanupConnection
         exitSuccess
@@ -64,6 +64,6 @@ connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: 
   cleanupConnection :: (MonadIO m) => m ()
   cleanupConnection = do
     atomically $ do
-      modifyTVar (ep ^. EP.connections) (HM.delete connId)
-      writeTBQueue (ep ^. EP.receiveQueue) $ NT.ConnectionClosed connId
+      modifyTVar (ep ^. connections) (HM.delete connId)
+      writeTBQueue (ep ^. receiveQueue) $ NT.ConnectionClosed connId
     closeKaisuiConnection conn

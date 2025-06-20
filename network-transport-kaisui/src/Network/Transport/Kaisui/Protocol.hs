@@ -15,12 +15,12 @@ import Data.Binary.Get
 import Data.Binary.Put
 import Data.Convertible
 import Network.Transport
-import Network.Transport.Kaisui.Type.FrameHeader as FH
+import Network.Transport.Kaisui.Type.FrameHeader
 import Network.Transport.Kaisui.Type.FrameType
-import Proto.Kaisui.CloseConnection as CC
-import Proto.Kaisui.CloseEndPoint as CEP
-import Proto.Kaisui.ConnectionRequest as CR
-import Proto.Kaisui.ConnectionResponse as CRP
+import Proto.Kaisui.CloseConnection
+import Proto.Kaisui.CloseEndPoint
+import Proto.Kaisui.ConnectionRequest
+import Proto.Kaisui.ConnectionResponse
 import Proto.Kaisui.DataMessage (DataMessage (..))
 import qualified Proto.Kaisui.DataMessage as DM
 import Proto.Kaisui.Envelope (Envelope (..), EnvelopeMessage (..))
@@ -42,17 +42,17 @@ decodeEnvelope bs = first (convert . T.pack . show) (P.fromByteString bs)
 -- | Create connection request
 createConnectionRequest :: EndPointAddress -> Reliability -> ConnectionId -> Envelope
 createConnectionRequest (EndPointAddress addr) rel cid =
-  Envelope $
-    Just $
-      ConnectionRequestMessage $
-        ConnectionRequest
-          { CR.fromEndpoint = convert addr
-          , CR.reliability = case rel of
-              ReliableOrdered -> 1
-              ReliableUnordered -> 2
-              Unreliable -> 0
-          , CR.connectionId = convert (show cid)
-          }
+  Envelope
+    $ Just
+    $ ConnectionRequestMessage
+    $ ConnectionRequest
+      { fromEndpoint = convert addr
+      , reliability = case rel of
+          ReliableOrdered -> 1
+          ReliableUnordered -> 2
+          Unreliable -> 0
+      , connectionId = convert (show cid)
+      }
 
 -- | Convert EndPointAddress to ConnectionResponseResult
 endPointAddressToResult :: EndPointAddress -> ConnectionResponseResult
@@ -61,44 +61,44 @@ endPointAddressToResult (EndPointAddress addr) = EndpointAddressResult $ convert
 -- | Create connection response
 createConnectionResponse :: ConnectionId -> Either Text EndPointAddress -> Envelope
 createConnectionResponse cid res =
-  Envelope $
-    Just $
-      ConnectionResponseMessage $
-        ConnectionResponse
-          { CRP.connectionId = convert (show cid)
-          , CRP.result = Just $ either ErrorResult endPointAddressToResult res
-          }
+  Envelope
+    $ Just
+    $ ConnectionResponseMessage
+    $ ConnectionResponse
+      { connectionId = convert (show cid)
+      , result = Just $ either ErrorResult endPointAddressToResult res
+      }
 
 -- | Create data message
 createDataMessage :: ConnectionId -> ByteString -> Envelope
 createDataMessage cid pld =
-  Envelope $
-    Just $
-      DataMessageMessage $
-        DataMessage
-          { DM.connectionId = convert (show cid)
-          , DM.payload = pld
-          }
+  Envelope
+    $ Just
+    $ DataMessageMessage
+    $ DataMessage
+      { DM.connectionId = convert (show cid)
+      , DM.payload = pld
+      }
 
 -- | Create close connection message
 createCloseConnection :: ConnectionId -> Envelope
 createCloseConnection cid =
-  Envelope $
-    Just $
-      CloseConnectionMessage $
-        CloseConnection
-          { CC.connectionId = convert (show cid)
-          }
+  Envelope
+    $ Just
+    $ CloseConnectionMessage
+    $ CloseConnection
+      { connectionId = convert (show cid)
+      }
 
 -- | Create close endpoint message
 createCloseEndPoint :: EndPointAddress -> Envelope
 createCloseEndPoint (EndPointAddress addr) =
-  Envelope $
-    Just $
-      CloseEndPointMessage $
-        CloseEndPoint
-          { CEP.endpointId = convert addr
-          }
+  Envelope
+    $ Just
+    $ CloseEndPointMessage
+    $ CloseEndPoint
+      { endpointId = convert addr
+      }
 
 -- | Encode a frame with header
 encodeFrame :: FrameType -> ByteString -> ByteString
@@ -116,7 +116,7 @@ decodeFrame bs
       case runGetOrFail getFrameHeader (convert bs) of
         Left (_, _, err) -> Left (convert err)
         Right (rest, _, header) ->
-          let payloadLen = convert $ header ^. FH.frameLength :: Int
+          let payloadLen = convert $ header ^. frameLength :: Int
               restBS = LBS.toStrict rest
            in if BS.length restBS < payloadLen
                 then Left "Insufficient data for payload"

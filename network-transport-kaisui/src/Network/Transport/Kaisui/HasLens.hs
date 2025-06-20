@@ -18,6 +18,7 @@ module Network.Transport.Kaisui.HasLens
   , HasMessage (..)
   , HasFrameType (..)
   , HasFrameLength (..)
+  , HasClosed (..)
   ) where
 
 import RIO
@@ -78,3 +79,6 @@ class HasFrameType s a | s -> a where
 
 class HasFrameLength s a | s -> a where
   frameLength :: Lens' s a
+
+class HasClosed s a | s -> a where
+  closed :: Lens' s a

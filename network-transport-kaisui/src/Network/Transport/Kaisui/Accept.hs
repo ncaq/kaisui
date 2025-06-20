@@ -3,7 +3,7 @@ module Network.Transport.Kaisui.Accept
   ) where
 
 import Data.Convertible
-import Network.Socket
+import Network.Socket hiding (socket)
 import qualified Network.Socket.ByteString as NSB
 import qualified Network.Transport as NT
 import Network.Transport.Kaisui.Connection
@@ -12,23 +12,21 @@ import Network.Transport.Kaisui.Protocol
 import Network.Transport.Kaisui.Receive
 import Network.Transport.Kaisui.Type.Connection
 import Network.Transport.Kaisui.Type.EndPoint
-import qualified Network.Transport.Kaisui.Type.EndPoint as EP
 import qualified Proto.Kaisui.ConnectionRequest as CR
 import Proto.Kaisui.Envelope
-import qualified Proto.Kaisui.Envelope as E
 import RIO
 import qualified RIO.HashMap as HM
 
 -- | Accept loop for incoming connections
 acceptLoop :: (HasLogFunc env, MonadReader env m, MonadThrow m, MonadUnliftIO m) => KaisuiEndPoint -> m ()
 acceptLoop ep = forever $ do
-  acceptResult <- try $ liftIO $ accept (ep ^. EP.socket)
+  acceptResult <- try $ liftIO $ accept (ep ^. socket)
   case acceptResult of
     Left (e :: SomeException) -> do
       -- Check if this is an expected error (endpoint closed)
       -- If the socket is closed, we exit the loop by throwing the exception
       -- Otherwise, log a warning and continue
-      isClosed <- readTVarIO (ep ^. EP.closed)
+      isClosed <- readTVarIO (ep ^. closed)
       if isClosed
         then throwM e -- Re-throw to exit the loop gracefully
         else do
@@ -53,7 +51,7 @@ handleEnvelope
   :: (HasLogFunc env, MonadReader env m, MonadThrow m, MonadUnliftIO m)
   => KaisuiEndPoint -> Socket -> SockAddr -> Envelope -> m ()
 handleEnvelope ep sock addr envelope =
-  case envelope ^. E.message of
+  case envelope ^. message of
     Just (ConnectionRequestMessage req) -> handleConnectionRequest ep sock addr req
     other -> liftIO $ do
       close sock
@@ -67,7 +65,7 @@ handleConnectionRequest ep sock addr req = do
   cid <- parseConnectionId req sock
   let rel = parseReliability req
   conn <- registerConnection ep cid rel sock addr
-  sendConnectionResponse sock cid (ep ^. EP.endpointId)
+  sendConnectionResponse sock cid (ep ^. endpointId)
   queueConnectionEvent ep cid rel req
   connectionReceiveLoop ep conn
 
@@ -96,7 +94,7 @@ registerConnection
 registerConnection ep cid rel sock addr =
   atomically $ do
     connection <- newKaisuiConnection cid rel sock addr
-    modifyTVar (ep ^. EP.connections) (HM.insert cid connection)
+    modifyTVar (ep ^. connections) (HM.insert cid connection)
     pure connection
 
 -- | Send connection response
@@ -111,5 +109,5 @@ queueConnectionEvent
   :: (MonadIO m) => KaisuiEndPoint -> NT.ConnectionId -> NT.Reliability -> CR.ConnectionRequest -> m ()
 queueConnectionEvent ep cid rel req =
   atomically
-    $ writeTBQueue (ep ^. EP.receiveQueue)
+    $ writeTBQueue (ep ^. receiveQueue)
     $ NT.ConnectionOpened cid rel (NT.EndPointAddress $ convert $ req ^. CR.fromEndpoint)

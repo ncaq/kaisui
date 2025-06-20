@@ -4,10 +4,10 @@ module Network.Transport.Kaisui.Connection
   , sendOnKaisuiConnection
   ) where
 
-import Network.Socket
+import Network.Socket hiding (socket)
 import qualified Network.Socket.ByteString as NSB
 import qualified Network.Transport as NT
-import Network.Transport.Kaisui.Type.Connection as CT
+import Network.Transport.Kaisui.Type.Connection
 import Network.Transport.Kaisui.Type.ConnectionState
 import RIO
 
@@ -17,11 +17,11 @@ newKaisuiConnection cid rel sock addr = do
   st <- newTVar ConnectionEstablished
   pure
     KaisuiConnection
-      { CT.connectionId = cid
-      , CT.reliability = rel
-      , CT.socket = sock
-      , CT.remoteAddr = addr
-      , CT.state = st
+      { connectionId = cid
+      , reliability = rel
+      , socket = sock
+      , remoteAddr = addr
+      , state = st
       }
 
 -- | Close a connection
@@ -29,19 +29,19 @@ closeKaisuiConnection :: (MonadIO m) => KaisuiConnection -> m ()
 closeKaisuiConnection conn = do
   -- Update state first
   wasOpen <- atomically $ do
-    oldState <- readTVar (conn ^. CT.state)
-    writeTVar (conn ^. CT.state) ConnectionClosed
+    oldState <- readTVar (conn ^. state)
+    writeTVar (conn ^. state) ConnectionClosed
     pure $ oldState == ConnectionEstablished
   -- Close socket if it was open
-  when wasOpen $ liftIO $ close (conn ^. CT.socket)
+  when wasOpen $ liftIO $ close (conn ^. socket)
 
 -- | Send data on a connection
 sendOnKaisuiConnection :: (MonadIO m, MonadThrow m) => KaisuiConnection -> ByteString -> m ()
 sendOnKaisuiConnection conn bs = do
   -- Check state atomically to avoid race conditions with closeKaisuiConnection
   canSend <- atomically $ do
-    st <- readTVar (conn ^. CT.state)
+    st <- readTVar (conn ^. state)
     pure $ st == ConnectionEstablished
   if canSend
-    then liftIO $ NSB.sendAll (conn ^. CT.socket) bs
+    then liftIO $ NSB.sendAll (conn ^. socket) bs
     else throwM $ NT.TransportError NT.SendClosed "Connection is closed"

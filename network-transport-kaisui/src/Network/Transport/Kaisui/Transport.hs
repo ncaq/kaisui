@@ -6,10 +6,9 @@ import Data.Convertible
 import qualified Network.Socket as NS
 import Network.Transport
 import Network.Transport.Kaisui.Adapter
-import Network.Transport.Kaisui.EndPoint as EPO
+import Network.Transport.Kaisui.EndPoint
 import Network.Transport.Kaisui.NewEndPoint
 import Network.Transport.Kaisui.Type.Transport
-import qualified Network.Transport.Kaisui.Type.Transport as T
 import RIO
 import qualified RIO.HashMap as HM
 
@@ -48,5 +47,5 @@ createKaisuiTransport h p = do
 -- | Close the transport
 closeKaisuiTransport :: (MonadIO m) => KaisuiTransport -> m ()
 closeKaisuiTransport transport = do
-  eps <- readTVarIO (transport ^. T.endPoints)
-  mapM_ EPO.closeKaisuiEndPoint (HM.elems eps)
+  eps <- readTVarIO (transport ^. endPoints)
+  mapM_ closeKaisuiEndPoint (HM.elems eps)

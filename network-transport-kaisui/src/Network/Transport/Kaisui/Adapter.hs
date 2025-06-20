@@ -7,10 +7,9 @@ module Network.Transport.Kaisui.Adapter
 import Network.Transport (Connection (..), EndPoint (..), Transport (..))
 import qualified Network.Transport as NT
 import Network.Transport.Kaisui.Connection (closeKaisuiConnection, sendOnKaisuiConnection)
-import qualified Network.Transport.Kaisui.EndPoint as EO
+import Network.Transport.Kaisui.EndPoint
 import Network.Transport.Kaisui.Type.Connection (KaisuiConnection)
-import Network.Transport.Kaisui.Type.EndPoint (KaisuiEndPoint)
-import qualified Network.Transport.Kaisui.Type.EndPoint as EP
+import Network.Transport.Kaisui.Type.EndPoint
 import Network.Transport.Kaisui.Type.Transport (KaisuiTransport)
 import RIO
 
@@ -38,12 +37,12 @@ toEndPoint
   -> EndPoint
 toEndPoint kep connectFunc =
   EndPoint
-    { receive = EO.receiveEvent kep
-    , address = kep ^. EP.endpointId
+    { receive = receiveEvent kep
+    , address = kep ^. endpointId
     , connect = connectFunc kep
     , newMulticastGroup = unsupportedMulticast
     , resolveMulticastGroup = unsupportedResolve
-    , closeEndPoint = EO.closeKaisuiEndPoint kep
+    , closeEndPoint = closeKaisuiEndPoint kep
     }
 
 -- | Convert internal connection to Network.Transport interface

@@ -8,7 +8,7 @@ import qualified Control.Concurrent.STM.TBQueue as STM
 import qualified Network.Socket as NS
 import qualified Network.Transport as NT
 import Network.Transport.Kaisui.Connection
-import Network.Transport.Kaisui.Type.EndPoint as EP
+import Network.Transport.Kaisui.Type.EndPoint
 import RIO
 import qualified RIO.HashMap as HM
 
@@ -24,13 +24,13 @@ createKaisuiEndPoint addr sock queueSize =
 closeKaisuiEndPoint :: (MonadIO m) => KaisuiEndPoint -> m ()
 closeKaisuiEndPoint ep = do
   -- Mark as closed
-  atomically $ writeTVar (ep ^. EP.closed) True
+  atomically $ writeTVar (ep ^. closed) True
   -- Close all connections
-  connsMap <- readTVarIO (ep ^. EP.connections)
+  connsMap <- readTVarIO (ep ^. connections)
   mapM_ closeKaisuiConnection (HM.elems connsMap)
   -- Close the socket
-  liftIO $ NS.close (ep ^. EP.socket)
+  liftIO $ NS.close (ep ^. socket)
 
 -- | Receive an event from the endpoint
 receiveEvent :: (MonadIO m) => KaisuiEndPoint -> m NT.Event
-receiveEvent ep = atomically $ STM.readTBQueue (ep ^. EP.receiveQueue)
+receiveEvent ep = atomically $ STM.readTBQueue (ep ^. receiveQueue)

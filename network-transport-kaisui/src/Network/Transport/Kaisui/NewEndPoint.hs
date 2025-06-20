@@ -9,7 +9,7 @@ import Network.Transport.Kaisui.Accept
 import Network.Transport.Kaisui.Adapter
 import Network.Transport.Kaisui.Connect
 import Network.Transport.Kaisui.EndPoint
-import Network.Transport.Kaisui.Type.Transport as KT
+import Network.Transport.Kaisui.Type.Transport
 import RIO
 import qualified RIO.HashMap as HM
 import qualified RIO.Text as T
@@ -25,14 +25,14 @@ newKaisuiEndPoint kt = do
   runIO <- askRunInIO
   -- Generate unique endpoint address
   endPointAddr <- atomically $ do
-    currentCount <- readTVar (kt ^. KT.counter)
-    writeTVar (kt ^. KT.counter) (currentCount + 1)
-    let addr = kt ^. KT.host <> ":" <> kt ^. KT.port <> ":" <> T.pack (show currentCount)
+    currentCount <- readTVar (kt ^. counter)
+    writeTVar (kt ^. counter) (currentCount + 1)
+    let addr = kt ^. host <> ":" <> kt ^. port <> ":" <> T.pack (show currentCount)
     pure $ EndPointAddress $ convert addr
   -- Create socket for endpoint
   socketCreationResult <- try $ liftIO $ do
     let hints = defaultHints{addrFlags = [AI_PASSIVE], addrSocketType = Stream}
-    addr : _ <- getAddrInfo (Just hints) (Just $ convert $ kt ^. KT.host) (Just $ convert $ kt ^. KT.port)
+    addr : _ <- getAddrInfo (Just hints) (Just $ convert $ kt ^. host) (Just $ convert $ kt ^. port)
     sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
     setSocketOption sock ReuseAddr 1
     bind sock (addrAddress addr)
@@ -45,7 +45,7 @@ newKaisuiEndPoint kt = do
       -- Create endpoint
       ep <- atomically $ do
         endpoint <- createKaisuiEndPoint endPointAddr sock 1000
-        modifyTVar (kt ^. KT.endPoints) (HM.insert endPointAddr endpoint)
+        modifyTVar (kt ^. endPoints) (HM.insert endPointAddr endpoint)
         pure endpoint
       -- Start accept loop
       acceptAsync <- async $ acceptLoop ep

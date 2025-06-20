@@ -12,7 +12,7 @@ import Network.Transport.Kaisui.Connection
 import Network.Transport.Kaisui.Protocol
 import Network.Transport.Kaisui.Receive
 import Network.Transport.Kaisui.Type.Connection hiding (reliability, remoteAddr)
-import Network.Transport.Kaisui.Type.EndPoint as EP
+import Network.Transport.Kaisui.Type.EndPoint
 import RIO
 import qualified RIO.HashMap as HM
 import System.Random
@@ -76,7 +76,7 @@ establishConnection
 establishConnection kep sock addr reliability = do
   connId <- liftIO $ randomIO @Word64
   conn <- registerNewConnection kep connId reliability sock (NS.addrAddress addr)
-  sendConnectionRequest sock (kep ^. EP.endpointId) reliability connId
+  sendConnectionRequest sock (kep ^. endpointId) reliability connId
   startReceiveLoop kep conn
   pure $ Right $ toConnection conn
 
@@ -92,7 +92,7 @@ registerNewConnection
 registerNewConnection kep connId reliability sock addr =
   atomically $ do
     connection <- newKaisuiConnection connId reliability sock addr
-    modifyTVar (kep ^. EP.connections) (HM.insert connId connection)
+    modifyTVar (kep ^. connections) (HM.insert connId connection)
     pure connection
 
 -- | Send connection request message
