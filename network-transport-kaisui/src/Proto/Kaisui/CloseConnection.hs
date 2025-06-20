@@ -4,13 +4,11 @@ module Proto.Kaisui.CloseConnection
   ) where
 
 import Control.Lens (makeFieldsId)
-import Data.Coerce (coerce)
 import qualified Proto3.Suite.Class as P
 import qualified Proto3.Suite.DotProto as Pdot
 import qualified Proto3.Suite.Types as P
 import qualified Proto3.Wire as P
 import RIO
-import qualified RIO.Text.Lazy as TL
 
 -- | Close connection
 newtype CloseConnection = CloseConnection
@@ -27,17 +25,14 @@ instance P.Named CloseConnection where
 instance P.HasDefault CloseConnection
 
 instance P.Message CloseConnection where
-  encodeMessage _ CloseConnection{..} =
+  encodeMessage _ msg =
     P.encodeMessageField
       (P.FieldNumber 1)
-      (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict connectionId))
+      (P.String (msg ^. connectionId))
 
   decodeMessage _ = do
-    connectionId <-
-      TL.toStrict
-        <$> P.coerceOver @(P.String TL.Text) @TL.Text
-          (P.at P.decodeMessageField (P.FieldNumber 1))
-    pure CloseConnection{..}
+    P.String connectionId' <- P.at P.decodeMessageField (P.FieldNumber 1)
+    pure CloseConnection{connectionId = connectionId'}
 
   dotProto _ =
     [ Pdot.DotProtoField

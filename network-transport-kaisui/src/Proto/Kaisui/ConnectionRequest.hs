@@ -6,13 +6,11 @@ module Proto.Kaisui.ConnectionRequest
   ) where
 
 import Control.Lens (makeFieldsId)
-import Data.Coerce (coerce)
 import qualified Proto3.Suite.Class as P
 import qualified Proto3.Suite.DotProto as Pdot
 import qualified Proto3.Suite.Types as P
 import qualified Proto3.Wire as P
 import RIO
-import qualified RIO.Text.Lazy as TL
 
 -- | Connection request
 data ConnectionRequest = ConnectionRequest
@@ -31,26 +29,25 @@ instance P.Named ConnectionRequest where
 instance P.HasDefault ConnectionRequest
 
 instance P.Message ConnectionRequest where
-  encodeMessage _ ConnectionRequest{..} =
+  encodeMessage _ msg =
     P.encodeMessageField
       (P.FieldNumber 1)
-      (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict fromEndpoint))
-      <> P.encodeMessageField (P.FieldNumber 2) reliability
+      (P.String (msg ^. fromEndpoint))
+      <> P.encodeMessageField (P.FieldNumber 2) (msg ^. reliability)
       <> P.encodeMessageField
         (P.FieldNumber 3)
-        (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict connectionId))
+        (P.String (msg ^. connectionId))
 
   decodeMessage _ = do
-    fromEndpoint <-
-      TL.toStrict
-        <$> P.coerceOver @(P.String TL.Text) @TL.Text
-          (P.at P.decodeMessageField (P.FieldNumber 1))
-    reliability <- P.at P.decodeMessageField (P.FieldNumber 2)
-    connectionId <-
-      TL.toStrict
-        <$> P.coerceOver @(P.String TL.Text) @TL.Text
-          (P.at P.decodeMessageField (P.FieldNumber 3))
-    pure ConnectionRequest{..}
+    P.String fromEndpoint' <- P.at P.decodeMessageField (P.FieldNumber 1)
+    reliability' <- P.at P.decodeMessageField (P.FieldNumber 2)
+    P.String connectionId' <- P.at P.decodeMessageField (P.FieldNumber 3)
+    pure
+      ConnectionRequest
+        { fromEndpoint = fromEndpoint'
+        , reliability = reliability'
+        , connectionId = connectionId'
+        }
 
   dotProto _ =
     [ Pdot.DotProtoField

@@ -4,13 +4,11 @@ module Proto.Kaisui.CloseEndPoint
   ) where
 
 import Control.Lens (makeFieldsId)
-import Data.Coerce (coerce)
 import qualified Proto3.Suite.Class as P
 import qualified Proto3.Suite.DotProto as Pdot
 import qualified Proto3.Suite.Types as P
 import qualified Proto3.Wire as P
 import RIO
-import qualified RIO.Text.Lazy as TL
 
 -- | Close endpoint
 newtype CloseEndPoint = CloseEndPoint
@@ -27,17 +25,14 @@ instance P.Named CloseEndPoint where
 instance P.HasDefault CloseEndPoint
 
 instance P.Message CloseEndPoint where
-  encodeMessage _ CloseEndPoint{..} =
+  encodeMessage _ msg =
     P.encodeMessageField
       (P.FieldNumber 1)
-      (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict endpointId))
+      (P.String (msg ^. endpointId))
 
   decodeMessage _ = do
-    endpointId <-
-      TL.toStrict
-        <$> P.coerceOver @(P.String TL.Text) @TL.Text
-          (P.at P.decodeMessageField (P.FieldNumber 1))
-    pure CloseEndPoint{..}
+    P.String endpointId' <- P.at P.decodeMessageField (P.FieldNumber 1)
+    pure CloseEndPoint{endpointId = endpointId'}
 
   dotProto _ =
     [ Pdot.DotProtoField

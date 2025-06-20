@@ -6,13 +6,11 @@ module Proto.Kaisui.ConnectionResponse
   ) where
 
 import Control.Lens (makeFieldsId)
-import Data.Coerce (coerce)
 import qualified Proto3.Suite.Class as P
 import qualified Proto3.Suite.DotProto as Pdot
 import qualified Proto3.Suite.Types as P
 import qualified Proto3.Wire as P
 import RIO
-import qualified RIO.Text.Lazy as TL
 
 -- | Connection response
 data ConnectionResponse = ConnectionResponse
@@ -35,47 +33,40 @@ instance P.Named ConnectionResponse where
 instance P.HasDefault ConnectionResponse
 
 instance P.Message ConnectionResponse where
-  encodeMessage _ ConnectionResponse{..} =
+  encodeMessage _ msg =
     P.encodeMessageField
       (P.FieldNumber 1)
-      (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict connectionId))
-      <> case result of
+      (P.String (msg ^. connectionId))
+      <> case msg ^. result of
         Just (ErrorResult err) ->
           P.encodeMessageField
             (P.FieldNumber 2)
-            (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict err))
+            (P.String err)
         Just (EndpointAddressResult addr) ->
           P.encodeMessageField
             (P.FieldNumber 3)
-            (coerce @TL.Text @(P.String TL.Text) (TL.fromStrict addr))
+            (P.String addr)
         Nothing -> mempty
 
   decodeMessage _ = do
-    connectionId <-
-      TL.toStrict
-        <$> P.coerceOver @(P.String TL.Text) @TL.Text
-          (P.at P.decodeMessageField (P.FieldNumber 1))
-    result <-
+    P.String connectionId' <- P.at P.decodeMessageField (P.FieldNumber 1)
+    result' <-
       P.oneof
         Nothing
         [
           ( P.FieldNumber 2
-          , Just
-              . ErrorResult
-              . TL.toStrict
-              . coerce @(P.String TL.Text) @TL.Text
-              <$> P.decodeMessageField
+          , do
+              P.String err <- P.decodeMessageField
+              pure $ Just $ ErrorResult err
           )
         ,
           ( P.FieldNumber 3
-          , Just
-              . EndpointAddressResult
-              . TL.toStrict
-              . coerce @(P.String TL.Text) @TL.Text
-              <$> P.decodeMessageField
+          , do
+              P.String addr <- P.decodeMessageField
+              pure $ Just $ EndpointAddressResult addr
           )
         ]
-    pure ConnectionResponse{..}
+    pure ConnectionResponse{connectionId = connectionId', result = result'}
 
   dotProto _ =
     [ Pdot.DotProtoField
