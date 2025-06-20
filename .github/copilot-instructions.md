@@ -334,3 +334,18 @@ import Control.Lens (makeFieldsId)
 その他のシンボルが必要になってからシンボルのimportを追加してください。
 RIOと衝突したときは原則としてRIO側のシンボルを優先してください。
 不要なときはimportしないでください。
+
+### rioとlensの衝突しやすさ
+
+rioとlensのシンボルはしばしば衝突します。
+rioが、
+[microlens: A tiny lens library with no dependencies](https://hackage.haskell.org/package/microlens)
+のシンボルをre-exportしているけれど、
+我々はしばしば本物の、
+[lens: Lenses, Folds and Traversals](https://hackage.haskell.org/package/lens)
+の方を使っているからです。
+
+原則としてRIOのexportしているlensのシンボルだけで事足りる場合はそちらを使ってください。
+もしlensのシンボルが必要であり、
+lensをnamed importしてもシンボルが衝突してしまう場合は、
+その時だけRIOのシンボルを`hiding`して回避してください。
