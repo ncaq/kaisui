@@ -310,6 +310,15 @@ Unicodeで正しく表現できる文字列である場合`Text`を使い、
 [Haskellの文字列型：分類と特徴 #Haskell - Qiita](https://qiita.com/mod_poppo/items/740659702f31216fdade)
 参照してください。
 
+### mutableな変数の使用を避ける
+
+Haskellに限らずmutableな変数は避けるべきだとされています。
+特にHaskellは純粋関数型言語でありimmutableにレコード全体を差分更新することが前提とされて効率よく行えるようになっているので、
+mutableな変数がほしいことはめったにありません。
+
+スレッド間の通信などでトランザクションを作りたいとかのどうしても必要な理由でない場合、
+mutableな変数を表す型は使わないでください。
+
 ### 代替Preludeの[rio: A standard library for Haskell](https://hackage.haskell.org/package/rio)
 
 他のモジュールより、出来るだけRIOが提供する以下のモジュールを優先してimportしてください。
