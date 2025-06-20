@@ -2,12 +2,29 @@ module Network.Transport.Kaisui.TestHelper
   ( withTestTransport
   , withTestEndPoint
   , withTestConnection
+  , TestReliability (..)
+  , getReliability
   )
 where
 
 import Network.Transport
 import Network.Transport.Kaisui.Transport
 import RIO
+import Test.QuickCheck
+
+-- | Newtype wrapper for Reliability to avoid orphan instance
+newtype TestReliability = TestReliability {unTestReliability :: Reliability}
+  deriving (Eq, Show)
+
+-- | Extract the Reliability value
+getReliability :: TestReliability -> Reliability
+getReliability (TestReliability rel) = rel
+
+instance Arbitrary TestReliability where
+  arbitrary = TestReliability <$> elements [ReliableOrdered, ReliableUnordered, Unreliable]
+  shrink (TestReliability ReliableOrdered) = []
+  shrink (TestReliability ReliableUnordered) = [TestReliability ReliableOrdered]
+  shrink (TestReliability Unreliable) = [TestReliability ReliableOrdered, TestReliability ReliableUnordered]
 
 -- | Test transport setup helper
 withTestTransport :: (Transport -> IO a) -> IO a

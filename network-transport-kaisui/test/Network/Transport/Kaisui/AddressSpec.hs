@@ -63,9 +63,7 @@ spec = describe "parseAddress" $ do
 
     it "should reject empty brackets" $ do
       let result = parseAddress (EndPointAddress "[]:8080:42")
-      case result of
-        Left _ -> pure ()
-        Right (host, _, _) -> expectationFailure $ "Expected failure but got: " <> show host
+      result `shouldSatisfy` isLeft
 
     it "should handle unclosed brackets" $ do
       parseAddress (EndPointAddress "[::1:8080:42") `shouldSatisfy` isLeft

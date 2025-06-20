@@ -120,7 +120,12 @@ test-suite network-transport-kaisui-test
   type: exitcode-stdio-1.0
   -- cabal-gild: discover ./test --exclude=test/Main.hs
   other-modules:
+    Network.Transport.Kaisui.AcceptSpec
     Network.Transport.Kaisui.AddressSpec
+    Network.Transport.Kaisui.ConnectSpec
+    Network.Transport.Kaisui.ConnectionSpec
+    Network.Transport.Kaisui.EndPointSpec
+    Network.Transport.Kaisui.ReceiveSpec
     Network.Transport.Kaisui.TestHelper
     Network.Transport.Kaisui.Type.ConnectionStateSpec
     Network.Transport.Kaisui.Type.FrameHeaderSpec

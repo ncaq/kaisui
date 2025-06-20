@@ -22,9 +22,9 @@ import Proto.Kaisui.CloseEndPoint
 import Proto.Kaisui.ConnectionRequest
 import Proto.Kaisui.ConnectionResponse
 import Proto.Kaisui.DataMessage (DataMessage (..))
-import qualified Proto.Kaisui.DataMessage as DM
+import qualified Proto.Kaisui.DataMessage as P
 import Proto.Kaisui.Envelope (Envelope (..), EnvelopeMessage (..))
-import qualified Proto3.Suite.Class as P
+import qualified Proto3.Suite.Class as Proto3
 import RIO
 import qualified RIO.ByteString as BS
 import qualified RIO.ByteString.Lazy as LBS
@@ -33,11 +33,11 @@ import qualified RIO.Text as T
 
 -- | Encode envelope to ByteString using Protocol Buffers
 encodeEnvelope :: Envelope -> ByteString
-encodeEnvelope env = LBS.toStrict $ P.toLazyByteString env
+encodeEnvelope env = LBS.toStrict $ Proto3.toLazyByteString env
 
 -- | Decode envelope from ByteString using Protocol Buffers
 decodeEnvelope :: ByteString -> Either ByteString Envelope
-decodeEnvelope bs = first (convert . T.pack . show) (P.fromByteString bs)
+decodeEnvelope bs = first (convert . T.pack . show) (Proto3.fromByteString bs)
 
 -- | Create connection request
 createConnectionRequest :: EndPointAddress -> Reliability -> ConnectionId -> Envelope
@@ -76,8 +76,8 @@ createDataMessage cid pld =
     $ Just
     $ DataMessageMessage
     $ DataMessage
-      { DM.connectionId = convert (show cid)
-      , DM.payload = pld
+      { P.connectionId = convert (show cid)
+      , P.payload = pld
       }
 
 -- | Create close connection message

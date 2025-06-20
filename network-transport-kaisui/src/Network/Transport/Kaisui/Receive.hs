@@ -9,7 +9,7 @@ import Network.Transport.Kaisui.Error
 import Network.Transport.Kaisui.Protocol
 import Network.Transport.Kaisui.Type.Connection
 import Network.Transport.Kaisui.Type.EndPoint
-import qualified Proto.Kaisui.DataMessage as DM
+import qualified Proto.Kaisui.DataMessage as P
 import Proto.Kaisui.Envelope
 import RIO
 import qualified RIO.ByteString as BS
@@ -50,7 +50,7 @@ connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: 
       Just (DataMessageMessage msg) ->
         atomically
           $ writeTBQueue (ep ^. receiveQueue)
-          $ NT.Received connId [msg ^. DM.payload]
+          $ NT.Received connId [msg ^. P.payload]
       Just (CloseConnectionMessage _) -> do
         cleanupConnection
         exitSuccess
