@@ -4,7 +4,6 @@ module Network.Transport.Kaisui.EndPoint
   , receiveEvent
   ) where
 
-import qualified Control.Concurrent.STM.TBQueue as STM
 import qualified Network.Socket as NS
 import qualified Network.Transport as NT
 import Network.Transport.Kaisui.Connection
@@ -33,4 +32,4 @@ closeKaisuiEndPoint ep = do
 
 -- | Receive an event from the endpoint
 receiveEvent :: (MonadIO m) => KaisuiEndPoint -> m NT.Event
-receiveEvent ep = atomically $ STM.readTBQueue (ep ^. receiveQueue)
+receiveEvent ep = atomically $ readTBQueue (ep ^. receiveQueue)
