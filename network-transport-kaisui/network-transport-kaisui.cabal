@@ -109,7 +109,9 @@ test-suite network-transport-kaisui-test
     -with-rtsopts=-N
 
   build-depends:
+    QuickCheck,
     network-transport-kaisui,
+    quickcheck-instances,
     sydtest,
 
   build-tool-depends:
@@ -117,4 +119,10 @@ test-suite network-transport-kaisui-test
 
   type: exitcode-stdio-1.0
   -- cabal-gild: discover ./test --exclude=test/Main.hs
-  other-modules: Network.Transport.KaisuiSpec
+  other-modules:
+    Network.Transport.Kaisui.AddressSpec
+    Network.Transport.Kaisui.TestHelper
+    Network.Transport.Kaisui.Type.ConnectionStateSpec
+    Network.Transport.Kaisui.Type.FrameHeaderSpec
+    Network.Transport.Kaisui.Type.FrameTypeSpec
+    Network.Transport.Kaisui.Type.TransportStateSpec
