@@ -453,3 +453,16 @@ rioが、
 もしlensのシンボルが必要であり、
 lensをnamed importしてもシンボルが衝突してしまう場合は、
 その時だけRIOのシンボルを`hiding`して回避してください。
+
+### [sydtest: A modern testing framework for Haskell with good defaults and advanced testing features.](https://hackage.haskell.org/package/sydtest)によるテスト
+
+#### モジュール名
+
+テストする対象と全く同じ名前空間に置いて、
+テストするモジュール名の末尾に`Spec`をつけてください。
+
+つまりモジュール名は例えば、
+`Network.Transport.Kaisui.Accept`
+なら、
+`Network.Transport.Kaisui.AcceptSpec`
+となります。
