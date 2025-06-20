@@ -71,6 +71,31 @@ library
   import: basic
   -- cabal-gild: discover ./src
   exposed-modules:
+    Network.Transport.Kaisui.Accept
+    Network.Transport.Kaisui.Adapter
+    Network.Transport.Kaisui.Address
+    Network.Transport.Kaisui.Connect
+    Network.Transport.Kaisui.Connection
+    Network.Transport.Kaisui.EndPoint
+    Network.Transport.Kaisui.Error
+    Network.Transport.Kaisui.HasLens
+    Network.Transport.Kaisui.NewEndPoint
+    Network.Transport.Kaisui.Protocol
+    Network.Transport.Kaisui.Receive
+    Network.Transport.Kaisui.Transport
+    Network.Transport.Kaisui.Type.Connection
+    Network.Transport.Kaisui.Type.ConnectionState
+    Network.Transport.Kaisui.Type.EndPoint
+    Network.Transport.Kaisui.Type.FrameHeader
+    Network.Transport.Kaisui.Type.FrameType
+    Network.Transport.Kaisui.Type.Transport
+    Network.Transport.Kaisui.Type.TransportState
+    Proto.Kaisui.CloseConnection
+    Proto.Kaisui.CloseEndPoint
+    Proto.Kaisui.ConnectionRequest
+    Proto.Kaisui.ConnectionResponse
+    Proto.Kaisui.DataMessage
+    Proto.Kaisui.Envelope
 
   hs-source-dirs: src
 

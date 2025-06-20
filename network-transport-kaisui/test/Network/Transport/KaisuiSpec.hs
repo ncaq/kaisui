@@ -1,7 +1,7 @@
 module Network.Transport.KaisuiSpec (spec) where
 
-import Network.Transport (closeTransport)
-import Network.Transport.Kaisui (createTransport)
+import Network.Transport
+import Network.Transport.Kaisui.Transport
 import RIO
 import Test.Syd
 
