@@ -1,0 +1,120 @@
+cabal-version: 3.0
+name: network-transport-kaisui
+version: 0.1.0.0
+synopsis: Network transport implementation for Kaisui distributed system
+description: Protocol Buffer based network transport for bridging Cloud Haskell and Rust ractor-cluster
+homepage: https://github.com/ncaq/kaisui
+license: Apache-2.0
+license-file: LICENSE
+author: ncaq
+maintainer: ncaq@ncaq.net
+category: Network
+build-type: Simple
+extra-doc-files: CHANGELOG.md
+extra-source-files: proto/*.proto
+
+common basic
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -Wredundant-constraints
+    -j
+
+  default-language: GHC2021
+  default-extensions:
+    DataKinds
+    DefaultSignatures
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    FunctionalDependencies
+    GADTs
+    LambdaCase
+    MultiWayIf
+    NoFieldSelectors
+    NoImplicitPrelude
+    NoImportQualifiedPost
+    OverloadedStrings
+    PartialTypeSignatures
+    QuasiQuotes
+    RecordWildCards
+    StrictData
+    TemplateHaskell
+    TypeFamilies
+    ViewPatterns
+
+  build-depends:
+    base,
+    binary,
+    containers,
+    convertible,
+    exceptions,
+    hashable,
+    lens,
+    megaparsec,
+    mtl,
+    network,
+    network-transport,
+    proto3-suite,
+    proto3-wire,
+    random,
+    rio,
+    stm,
+    unliftio,
+    vector,
+
+library
+  import: basic
+  -- cabal-gild: discover ./src
+  exposed-modules:
+    Network.Transport.Kaisui.Accept
+    Network.Transport.Kaisui.Adapter
+    Network.Transport.Kaisui.Address
+    Network.Transport.Kaisui.Connect
+    Network.Transport.Kaisui.Connection
+    Network.Transport.Kaisui.EndPoint
+    Network.Transport.Kaisui.Error
+    Network.Transport.Kaisui.HasLens
+    Network.Transport.Kaisui.NewEndPoint
+    Network.Transport.Kaisui.Protocol
+    Network.Transport.Kaisui.Receive
+    Network.Transport.Kaisui.Transport
+    Network.Transport.Kaisui.Type.Connection
+    Network.Transport.Kaisui.Type.ConnectionState
+    Network.Transport.Kaisui.Type.EndPoint
+    Network.Transport.Kaisui.Type.FrameHeader
+    Network.Transport.Kaisui.Type.FrameType
+    Network.Transport.Kaisui.Type.Transport
+    Network.Transport.Kaisui.Type.TransportState
+    Proto.Kaisui.CloseConnection
+    Proto.Kaisui.CloseEndPoint
+    Proto.Kaisui.ConnectionRequest
+    Proto.Kaisui.ConnectionResponse
+    Proto.Kaisui.DataMessage
+    Proto.Kaisui.Envelope
+
+  hs-source-dirs: src
+
+test-suite network-transport-kaisui-test
+  import: basic
+  hs-source-dirs: test
+  main-is: Main.hs
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
+  build-depends:
+    network-transport-kaisui,
+    sydtest,
+
+  build-tool-depends:
+    sydtest-discover:sydtest-discover
+
+  type: exitcode-stdio-1.0
+  -- cabal-gild: discover ./test --exclude=test/Main.hs
+  other-modules: Network.Transport.KaisuiSpec

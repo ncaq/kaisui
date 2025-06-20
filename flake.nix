@@ -53,8 +53,8 @@
             };
           in
           {
-            kaisui-distributed-process = final.haskell-nix.cabalProject' {
-              src = ./kaisui-distributed-process;
+            network-transport-kaisui = final.haskell-nix.cabalProject' {
+              src = ./network-transport-kaisui;
               compiler-nix-name = ghc-version;
               shell = {
                 tools = {
@@ -108,7 +108,7 @@
             };
           };
         });
-        flake = pkgs.kaisui-distributed-process.flake { };
+        flake = pkgs.network-transport-kaisui.flake { };
         haskellShell = flake.devShells.default;
       in
       (builtins.removeAttrs flake [
