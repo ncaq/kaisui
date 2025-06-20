@@ -48,10 +48,8 @@ common basic
     ViewPatterns
 
   build-depends:
-    async,
     base,
     binary,
-    bytestring,
     containers,
     convertible,
     exceptions,
