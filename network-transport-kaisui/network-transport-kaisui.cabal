@@ -64,7 +64,6 @@ common basic
     random,
     rio,
     unliftio,
-    vector,
 
 library
   import: basic
