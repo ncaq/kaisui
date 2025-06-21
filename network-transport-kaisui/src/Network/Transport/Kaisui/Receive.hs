@@ -20,14 +20,14 @@ connectionReceiveLoop
   :: (HasLogFunc env, MonadReader env m, MonadThrow m, MonadUnliftIO m) => KaisuiEndPoint -> KaisuiConnection -> m ()
 connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: SomeException))
  where
-  handleLoop = forever $ do
+  handleLoop = do
     bs <- liftIO $ NSB.recv (conn ^. socket) 4096
     if BS.null bs
       then handleConnectionClosed
-      else handleReceivedData bs
+      else whenM (handleReceivedData bs) handleLoop
   handleException e = do
     -- Log the error unless it's an expected connection close
-    logDebug $ "Connection receive error: " <> displayShow e
+    logError $ "Connection receive error: " <> displayShow e
     cleanupConnection
     throwM e -- Re-throw to properly exit the thread
   connId = conn ^. connectionId
@@ -38,26 +38,24 @@ connectionReceiveLoop ep conn = handleLoop `catch` (\e -> handleException (e :: 
   -- Handle received data
   handleReceivedData bs =
     case decodeEnvelope bs of
-      Left err -> do
-        -- Log decoding error and close connection (protocol is corrupted)
-        logWarn $ "Failed to decode envelope on connection " <> displayShow connId <> ": " <> displayShow err
-        throwDecodingFailed "Failed to decode envelope" err
+      Left err -> throwDecodingFailed "Failed to decode envelope" err
       Right envelope -> handleEnvelope envelope
   -- Handle decoded envelope
-  handleEnvelope :: (MonadIO m, MonadThrow m) => Envelope -> m ()
   handleEnvelope envelope =
     case envelope ^. message of
-      Just (DataMessageMessage msg) ->
+      Just (DataMessageMessage msg) -> do
         atomically
           $ writeTBQueue (ep ^. receiveQueue)
           $ NT.Received connId [msg ^. P.payload]
-      Just (CloseConnectionMessage _) -> do
+        pure True -- Continue receiving
+      Just (CloseConnectionMessage msg) -> do
+        logDebug $ "Received CloseConnectionMessage for connection " <> displayShow connId <> ": " <> displayShow msg
         cleanupConnection
-        exitSuccess
-      Just other ->
+        pure False -- Stop receiving
+      Just other -> do
         -- Unexpected message type in data stream, protocol error
         throwUnexpectedMessage $ "Unexpected message type in data stream: " <> utf8BuilderToText (displayShow other)
-      Nothing ->
+      Nothing -> do
         -- Empty envelope, protocol error
         throwUnexpectedMessage "Empty envelope received"
   -- Clean up connection
