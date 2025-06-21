@@ -99,11 +99,11 @@ spec = describe "Kaisui Receive" $ do
         currentState <- readTVarIO (conn ^. state)
         liftIO $ currentState `shouldBe` ConnectionClosed
 
-        -- Receive loop should have exited
+        -- Receive loop should have exited normally
         result <- tryAny $ wait recvAsync
         case result of
-          Left e -> logDebug $ "Receive loop exited with expected exception: " <> displayShow e
-          Right v -> liftIO $ expectationFailure $ "Receive loop should have thrown exception but returned: " <> show v
+          Left e -> liftIO $ expectationFailure $ "Receive loop threw unexpected exception: " <> show e
+          Right v -> logDebug $ "Receive loop exited normally with: " <> displayShow v
 
       -- Cleanup
       NS.close clientSock
@@ -144,8 +144,8 @@ spec = describe "Kaisui Receive" $ do
         -- Receive loop should exit successfully
         result <- tryAny $ wait recvAsync
         case result of
-          Right v -> logDebug $ "Receive loop exited normally with: " <> displayShow v
           Left e -> liftIO $ expectationFailure $ "Receive loop threw unexpected exception: " <> show e
+          Right v -> logDebug $ "Receive loop exited normally with: " <> displayShow v
 
       -- Cleanup
       NS.close clientSock
