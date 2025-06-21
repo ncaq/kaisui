@@ -125,6 +125,7 @@ test-suite network-transport-kaisui-test
     Network.Transport.Kaisui.ConnectSpec
     Network.Transport.Kaisui.ConnectionSpec
     Network.Transport.Kaisui.EndPointSpec
+    Network.Transport.Kaisui.ProtocolSpec
     Network.Transport.Kaisui.ReceiveSpec
     Network.Transport.Kaisui.TestHelper
     Network.Transport.Kaisui.Type.ConnectionStateSpec
