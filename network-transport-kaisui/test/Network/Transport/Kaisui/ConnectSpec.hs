@@ -94,6 +94,7 @@ spec = describe "Kaisui Connect" $ do
         result <- connectKaisui ep remoteAddr NT.ReliableOrdered NT.defaultConnectHints
 
         case result of
+          Left err -> liftIO $ expectationFailure $ "Connection failed: " <> show err
           Right conn -> do
             -- Verify connection was registered
             conns <- readTVarIO (ep ^. connections)
@@ -101,7 +102,6 @@ spec = describe "Kaisui Connect" $ do
 
             -- Close connection
             liftIO $ NT.close conn
-          Left err -> liftIO $ expectationFailure $ "Connection failed: " <> show err
 
         -- Cleanup
         cancel serverAsync
