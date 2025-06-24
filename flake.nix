@@ -10,10 +10,6 @@
       url = "github:input-output-hk/haskell.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -23,13 +19,11 @@
       flake-utils,
       treefmt-nix,
       haskellNix,
-      rust-overlay,
     }:
     let
       ghc-version = "ghc9102";
       overlays = [
         haskellNix.overlay
-        rust-overlay.overlays.default
         (
           final: _prev:
           let
@@ -43,43 +37,26 @@
             inherit (tool-haskell-language-server.project.hsPkgs.fourmolu.components.exes) fourmolu;
           }
         )
-        (
-          final: prev:
-          let
-            rustToolchain = final.rust-bin.stable.latest.default;
-            rustPlatform = final.makeRustPlatform {
-              cargo = rustToolchain;
-              rustc = rustToolchain;
-            };
-          in
-          {
-            network-transport-kaisui = final.haskell-nix.cabalProject' {
-              src = ./network-transport-kaisui;
-              compiler-nix-name = ghc-version;
-              shell = {
-                tools = {
-                  cabal = "latest";
-                  cabal-gild = "latest";
-                  haskell-language-server = "latest";
-                };
-                buildInputs = with prev; [
-                  fourmolu
-                  (writeScriptBin "haskell-language-server-wrapper" ''
-                    #!${stdenv.shell}
-                    exec haskell-language-server "$@"
-                  '')
-                ];
+        (final: prev: {
+          network-transport-kaisui = final.haskell-nix.cabalProject' {
+            src = ./network-transport-kaisui;
+            compiler-nix-name = ghc-version;
+            shell = {
+              tools = {
+                cabal = "latest";
+                cabal-gild = "latest";
+                haskell-language-server = "latest";
               };
+              buildInputs = with prev; [
+                fourmolu
+                (writeScriptBin "haskell-language-server-wrapper" ''
+                  #!${stdenv.shell}
+                  exec haskell-language-server "$@"
+                '')
+              ];
             };
-
-            kaisui-ractor = rustPlatform.buildRustPackage {
-              pname = "kaisui-ractor";
-              version = "0.1.0";
-              src = ./kaisui-ractor;
-              cargoLock.lockFile = ./kaisui-ractor/Cargo.lock;
-            };
-          }
-        )
+          };
+        })
       ];
     in
     flake-utils.lib.eachSystem [ flake-utils.lib.system.x86_64-linux ] (
@@ -94,13 +71,9 @@
           programs = {
             cabal-gild.enable = true;
             deadnix.enable = true;
-            hlint = {
-              enable = true;
-              excludes = [ "network-transport-kaisui/src/Proto/**" ]; # TODO: 自動生成ソースコードの取り扱いを後で考え直す。
-            };
+            hlint.enable = true;
             nixfmt.enable = true;
             prettier.enable = true;
-            rustfmt.enable = true;
             shellcheck.enable = true;
             shfmt.enable = true;
             statix.enable = true;
@@ -112,7 +85,6 @@
           };
         });
         flake = pkgs.network-transport-kaisui.flake { };
-        haskellShell = flake.devShells.default;
       in
       (builtins.removeAttrs flake [
         "ciJobs"
@@ -131,19 +103,8 @@
         ) flake.apps;
         checks = flake.checks // {
           formatting = treefmtEval.config.build.check self;
-          inherit (pkgs) kaisui-ractor;
         };
         formatter = treefmtEval.config.build.wrapper;
-        devShells = flake.devShells // {
-          default = haskellShell.overrideAttrs (old: {
-            buildInputs =
-              old.buildInputs
-              ++ (with pkgs; [
-                rust-bin.stable.latest.default
-                rust-analyzer
-              ]);
-          });
-        };
       }
     );
 

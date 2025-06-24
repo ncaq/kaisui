@@ -16,6 +16,3 @@ max_line_length = 120
 trim_trailing_whitespace = false
 # GitHubのMarkdownは順序付きリストをネストする時に、インデント幅を2にすると適切にパース出来ないので4にする。
 indent_size = 4
-
-[*.rs]
-indent_size = 4

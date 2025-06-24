@@ -1,0 +1,6 @@
+packages:
+  network-transport-kaisui
+
+allow-boot-library-installs: True
+with-compiler: ghc-9.10.2
+index-state: 2025-06-15T23:45:16Z

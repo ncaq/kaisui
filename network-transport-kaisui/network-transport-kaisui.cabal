@@ -2,7 +2,6 @@ cabal-version: 3.0
 name: network-transport-kaisui
 version: 0.1.0.0
 synopsis: Network transport implementation for Kaisui distributed system
-description: Protocol Buffer based network transport for bridging Cloud Haskell and Rust ractor-cluster
 homepage: https://github.com/ncaq/kaisui
 license: Apache-2.0
 license-file: LICENSE
@@ -10,8 +9,6 @@ author: ncaq
 maintainer: ncaq@ncaq.net
 category: Network
 build-type: Simple
-extra-doc-files: CHANGELOG.md
-extra-source-files: proto/*.proto
 
 common basic
   ghc-options:
@@ -50,11 +47,7 @@ common basic
   build-depends:
     aeson,
     base,
-    binary,
-    bytestring,
-    containers,
     convertible,
-    deepseq,
     exceptions,
     hashable,
     lens,
@@ -62,64 +55,16 @@ common basic
     mtl,
     network,
     network-transport,
-    proto3-suite,
-    proto3-wire,
+    quic,
     random,
     rio,
-    text,
     unliftio,
-    vector,
-
-  build-tool-depends:
-    proto3-suite:compile-proto-file
 
 library
   import: basic
   -- cabal-gild: discover ./src
   exposed-modules:
-    Network.Transport.Kaisui.Accept
-    Network.Transport.Kaisui.Adapter
-    Network.Transport.Kaisui.Address
-    Network.Transport.Kaisui.Connect
-    Network.Transport.Kaisui.Connection
-    Network.Transport.Kaisui.EndPoint
-    Network.Transport.Kaisui.Error
-    Network.Transport.Kaisui.HasLens
-    Network.Transport.Kaisui.NewEndPoint
-    Network.Transport.Kaisui.Protocol
-    Network.Transport.Kaisui.Receive
-    Network.Transport.Kaisui.Transport
-    Network.Transport.Kaisui.Type.Connection
-    Network.Transport.Kaisui.Type.ConnectionState
-    Network.Transport.Kaisui.Type.EndPoint
-    Network.Transport.Kaisui.Type.FrameHeader
-    Network.Transport.Kaisui.Type.FrameType
-    Network.Transport.Kaisui.Type.Transport
-    Network.Transport.Kaisui.Type.TransportState
-    Proto.Kaisui.CloseConnection
-    Proto.Kaisui.CloseEndPoint
-    Proto.Kaisui.ConnectionRequest
-    Proto.Kaisui.ConnectionResponse
-    Proto.Kaisui.DataMessage
-    Proto.Kaisui.Envelope
-    Proto.RactorCluster.Auth
-    Proto.RactorCluster.Control
-    Proto.RactorCluster.Meta
-    Proto.RactorCluster.Node
-
   hs-source-dirs: src
-
-executable test-ractor-connect
-  import: basic
-  hs-source-dirs: app
-  main-is: TestRactorConnect.hs
-  ghc-options:
-    -threaded
-    -rtsopts
-    -with-rtsopts=-N
-
-  build-depends:
-    network-transport-kaisui
 
 test-suite network-transport-kaisui-test
   import: basic
@@ -134,6 +79,11 @@ test-suite network-transport-kaisui-test
 
   build-depends:
     QuickCheck,
+    distributed-process,
+    distributed-process-async,
+    distributed-process-client-server,
+    distributed-process-execution,
+    distributed-process-extras,
     network-transport-kaisui,
     quickcheck-instances,
     sydtest,
@@ -144,15 +94,3 @@ test-suite network-transport-kaisui-test
   type: exitcode-stdio-1.0
   -- cabal-gild: discover ./test --exclude=test/Main.hs
   other-modules:
-    Network.Transport.Kaisui.AcceptSpec
-    Network.Transport.Kaisui.AddressSpec
-    Network.Transport.Kaisui.ConnectSpec
-    Network.Transport.Kaisui.ConnectionSpec
-    Network.Transport.Kaisui.EndPointSpec
-    Network.Transport.Kaisui.ProtocolSpec
-    Network.Transport.Kaisui.ReceiveSpec
-    Network.Transport.Kaisui.TestHelper
-    Network.Transport.Kaisui.Type.ConnectionStateSpec
-    Network.Transport.Kaisui.Type.FrameHeaderSpec
-    Network.Transport.Kaisui.Type.FrameTypeSpec
-    Network.Transport.Kaisui.Type.TransportStateSpec
