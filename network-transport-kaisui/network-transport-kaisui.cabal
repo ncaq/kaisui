@@ -64,6 +64,12 @@ library
   import: basic
   -- cabal-gild: discover ./src
   exposed-modules:
+    Network.Transport.Kaisui
+    Network.Transport.Kaisui.Addr
+    Network.Transport.Kaisui.AddrInfo
+    Network.Transport.Kaisui.CreateTransport
+    Network.Transport.Kaisui.Parameters
+
   hs-source-dirs: src
 
 test-suite network-transport-kaisui-test
