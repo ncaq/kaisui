@@ -77,7 +77,7 @@ establishConnection kep sock addr reliability = do
   connId <- liftIO $ randomIO @Word64
   conn <- registerNewConnection kep connId reliability sock (NS.addrAddress addr)
   sendConnectionRequest sock (kep ^. endpointId) reliability connId
-  startReceiveLoop kep conn
+  void $ startReceiveLoop kep conn
   pure $ Right $ toConnection conn
 
 -- | Register a new connection
@@ -103,16 +103,13 @@ sendConnectionRequest
   -> NT.Reliability
   -> NT.ConnectionId
   -> m ()
-sendConnectionRequest sock epId reliability connId = do
-  let envelope = createConnectionRequest epId reliability connId
-  liftIO $ NSB.sendAll sock (encodeEnvelope envelope)
+sendConnectionRequest sock epId reliability connId =
+  liftIO $ NSB.sendAll sock $ encodeEnvelope $ createConnectionRequest epId reliability connId
 
 -- | Start receive loop for connection
 startReceiveLoop
   :: (HasLogFunc env, MonadReader env m, MonadThrow m, MonadUnliftIO m)
   => KaisuiEndPoint
   -> KaisuiConnection
-  -> m ()
-startReceiveLoop kep conn = do
-  recvAsync <- async $ connectionReceiveLoop kep conn
-  link recvAsync
+  -> m (Async ())
+startReceiveLoop kep conn = async $ connectionReceiveLoop kep conn

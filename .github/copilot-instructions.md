@@ -453,3 +453,27 @@ rioが、
 もしlensのシンボルが必要であり、
 lensをnamed importしてもシンボルが衝突してしまう場合は、
 その時だけRIOのシンボルを`hiding`して回避してください。
+
+### [sydtest: A modern testing framework for Haskell with good defaults and advanced testing features.](https://hackage.haskell.org/package/sydtest)によるテスト
+
+#### モジュール名
+
+テストする対象と全く同じ名前空間に置いて、
+テストするモジュール名の末尾に`Spec`をつけてください。
+
+つまりモジュール名は例えば、
+`Network.Transport.Kaisui.Accept`
+なら、
+`Network.Transport.Kaisui.AcceptSpec`
+となります。
+
+### プロジェクト固有のimportの風習
+
+なるべくimportするときにnamed importやqualified importは使わないべきですが、
+どうしても衝突してしまってqualified importが必要な場合は、
+`Proto.Kaisui`で始まるモジュールは原則的に`as`する対象は`P`にしてください。
+例えば以下のようにします。
+
+```haskell
+import qualified Proto.Kaisui.ConnectionRequest as P
+```

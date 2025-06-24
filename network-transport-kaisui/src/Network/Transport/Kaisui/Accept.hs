@@ -12,7 +12,7 @@ import Network.Transport.Kaisui.Protocol
 import Network.Transport.Kaisui.Receive
 import Network.Transport.Kaisui.Type.Connection
 import Network.Transport.Kaisui.Type.EndPoint
-import qualified Proto.Kaisui.ConnectionRequest as CR
+import qualified Proto.Kaisui.ConnectionRequest as P
 import Proto.Kaisui.Envelope
 import RIO
 import qualified RIO.HashMap as HM
@@ -60,7 +60,7 @@ handleEnvelope ep sock addr envelope =
 -- | Handle connection request
 handleConnectionRequest
   :: (HasLogFunc env, MonadReader env m, MonadThrow m, MonadUnliftIO m)
-  => KaisuiEndPoint -> Socket -> SockAddr -> CR.ConnectionRequest -> m ()
+  => KaisuiEndPoint -> Socket -> SockAddr -> P.ConnectionRequest -> m ()
 handleConnectionRequest ep sock addr req = do
   cid <- parseConnectionId req sock
   let rel = parseReliability req
@@ -71,9 +71,9 @@ handleConnectionRequest ep sock addr req = do
 
 -- | Parse connection ID from request
 parseConnectionId
-  :: (MonadIO m) => CR.ConnectionRequest -> Socket -> m NT.ConnectionId
+  :: (MonadIO m) => P.ConnectionRequest -> Socket -> m NT.ConnectionId
 parseConnectionId req sock = do
-  let cidStr = convert $ req ^. CR.connectionId :: String
+  let cidStr = convert $ req ^. P.connectionId :: String
   case readMaybe cidStr of
     Nothing -> liftIO $ do
       close sock
@@ -81,9 +81,9 @@ parseConnectionId req sock = do
     Just c -> pure c
 
 -- | Parse reliability from request
-parseReliability :: CR.ConnectionRequest -> NT.Reliability
+parseReliability :: P.ConnectionRequest -> NT.Reliability
 parseReliability req =
-  case req ^. CR.reliability of
+  case req ^. P.reliability of
     0 -> NT.Unreliable
     1 -> NT.ReliableOrdered
     _ -> NT.ReliableUnordered
@@ -106,8 +106,8 @@ sendConnectionResponse sock cid epId = do
 
 -- | Queue connection opened event
 queueConnectionEvent
-  :: (MonadIO m) => KaisuiEndPoint -> NT.ConnectionId -> NT.Reliability -> CR.ConnectionRequest -> m ()
+  :: (MonadIO m) => KaisuiEndPoint -> NT.ConnectionId -> NT.Reliability -> P.ConnectionRequest -> m ()
 queueConnectionEvent ep cid rel req =
   atomically
     $ writeTBQueue (ep ^. receiveQueue)
-    $ NT.ConnectionOpened cid rel (NT.EndPointAddress $ convert $ req ^. CR.fromEndpoint)
+    $ NT.ConnectionOpened cid rel (NT.EndPointAddress $ convert $ req ^. P.fromEndpoint)

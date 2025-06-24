@@ -63,9 +63,7 @@ common basic
     proto3-wire,
     random,
     rio,
-    stm,
     unliftio,
-    vector,
 
 library
   import: basic
@@ -103,13 +101,17 @@ test-suite network-transport-kaisui-test
   import: basic
   hs-source-dirs: test
   main-is: Main.hs
+  -- QuickCheckのインスタンスを定義する必要があるので仕方なく孤立インスタンスの警告を無効化している。
   ghc-options:
     -threaded
     -rtsopts
     -with-rtsopts=-N
+    -Wno-orphans
 
   build-depends:
+    QuickCheck,
     network-transport-kaisui,
+    quickcheck-instances,
     sydtest,
 
   build-tool-depends:
@@ -117,4 +119,16 @@ test-suite network-transport-kaisui-test
 
   type: exitcode-stdio-1.0
   -- cabal-gild: discover ./test --exclude=test/Main.hs
-  other-modules: Network.Transport.KaisuiSpec
+  other-modules:
+    Network.Transport.Kaisui.AcceptSpec
+    Network.Transport.Kaisui.AddressSpec
+    Network.Transport.Kaisui.ConnectSpec
+    Network.Transport.Kaisui.ConnectionSpec
+    Network.Transport.Kaisui.EndPointSpec
+    Network.Transport.Kaisui.ProtocolSpec
+    Network.Transport.Kaisui.ReceiveSpec
+    Network.Transport.Kaisui.TestHelper
+    Network.Transport.Kaisui.Type.ConnectionStateSpec
+    Network.Transport.Kaisui.Type.FrameHeaderSpec
+    Network.Transport.Kaisui.Type.FrameTypeSpec
+    Network.Transport.Kaisui.Type.TransportStateSpec
