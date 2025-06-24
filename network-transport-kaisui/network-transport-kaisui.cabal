@@ -48,10 +48,13 @@ common basic
     ViewPatterns
 
   build-depends:
+    aeson,
     base,
     binary,
+    bytestring,
     containers,
     convertible,
+    deepseq,
     exceptions,
     hashable,
     lens,
@@ -63,7 +66,12 @@ common basic
     proto3-wire,
     random,
     rio,
+    text,
     unliftio,
+    vector,
+
+  build-tool-depends:
+    proto3-suite:compile-proto-file
 
 library
   import: basic
@@ -94,8 +102,24 @@ library
     Proto.Kaisui.ConnectionResponse
     Proto.Kaisui.DataMessage
     Proto.Kaisui.Envelope
+    Proto.RactorCluster.Auth
+    Proto.RactorCluster.Control
+    Proto.RactorCluster.Meta
+    Proto.RactorCluster.Node
 
   hs-source-dirs: src
+
+executable test-ractor-connect
+  import: basic
+  hs-source-dirs: app
+  main-is: TestRactorConnect.hs
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
+  build-depends:
+    network-transport-kaisui
 
 test-suite network-transport-kaisui-test
   import: basic
