@@ -216,7 +216,7 @@ spec = describe "Kaisui Receive" $ do
 
       runSimpleApp $ do
         -- Start receive loop
-        recvAsync <- async $ connectionReceiveLoop ep conn
+        recvAsync <- async $ noLogging $ connectionReceiveLoop ep conn
 
         -- Send invalid data
         liftIO $ NSB.sendAll serverSock "invalid protobuf data"
@@ -301,7 +301,7 @@ spec = describe "Kaisui Receive" $ do
 
       runSimpleApp $ do
         -- Start receive loop
-        recvAsync <- async $ connectionReceiveLoop ep conn
+        recvAsync <- async $ noLogging $ connectionReceiveLoop ep conn
 
         -- Send a ConnectionRequest message (unexpected in data stream)
         let wrongMsg = createConnectionRequest (EndPointAddress "wrong:9000:1") NT.ReliableOrdered (4007 :: ConnectionId)

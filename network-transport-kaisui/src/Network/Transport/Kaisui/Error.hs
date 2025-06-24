@@ -34,7 +34,6 @@ module Network.Transport.Kaisui.Error
   , throwInvalidMessageType
   , throwUnexpectedMessage
   , throwProtocolVersionMismatch
-  , throwSerializationError
   , throwDecodingFailed
   , throwEncodingFailed
   , throwNetworkError
