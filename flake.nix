@@ -94,7 +94,10 @@
           programs = {
             cabal-gild.enable = true;
             deadnix.enable = true;
-            hlint.enable = true;
+            hlint = {
+              enable = true;
+              excludes = [ "network-transport-kaisui/src/Proto/**" ]; # TODO: 自動生成ソースコードの取り扱いを後で考え直す。
+            };
             nixfmt.enable = true;
             prettier.enable = true;
             rustfmt.enable = true;

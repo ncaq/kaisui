@@ -48,10 +48,13 @@ common basic
     ViewPatterns
 
   build-depends:
+    aeson,
     base,
     binary,
+    bytestring,
     containers,
     convertible,
+    deepseq,
     exceptions,
     hashable,
     lens,
@@ -63,7 +66,9 @@ common basic
     proto3-wire,
     random,
     rio,
+    text,
     unliftio,
+    vector,
 
   build-tool-depends:
     proto3-suite:compile-proto-file
@@ -97,6 +102,10 @@ library
     Proto.Kaisui.ConnectionResponse
     Proto.Kaisui.DataMessage
     Proto.Kaisui.Envelope
+    Proto.RactorCluster.Auth
+    Proto.RactorCluster.Control
+    Proto.RactorCluster.Meta
+    Proto.RactorCluster.Node
 
   hs-source-dirs: src
 
