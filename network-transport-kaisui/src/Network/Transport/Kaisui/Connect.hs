@@ -103,9 +103,8 @@ sendConnectionRequest
   -> NT.Reliability
   -> NT.ConnectionId
   -> m ()
-sendConnectionRequest sock epId reliability connId = do
-  let envelope = createConnectionRequest epId reliability connId
-  liftIO $ NSB.sendAll sock (encodeEnvelope envelope)
+sendConnectionRequest sock epId reliability connId =
+  liftIO $ NSB.sendAll sock $ encodeEnvelope $ createConnectionRequest epId reliability connId
 
 -- | Start receive loop for connection
 startReceiveLoop
