@@ -24,7 +24,54 @@ import Test.Syd
 spec :: Spec
 spec = describe "Kaisui Receive" $ do
   describe "connectionReceiveLoop" $ do
-    it "should handle data messages" $ do
+    it "should handle simple data message" $ do
+      -- Create sockets
+      (clientSock, serverSock) <- NS.socketPair NS.AF_UNIX NS.Stream NS.defaultProtocol
+
+      -- Create endpoint and connection
+      let epAddr = EndPointAddress "test:8080:1"
+          sockAddr = NS.SockAddrUnix "test"
+          cid = 4001 :: ConnectionId
+          rel = NT.ReliableOrdered
+
+      ep <- atomically $ createKaisuiEndPoint epAddr serverSock 100
+      conn <- atomically $ do
+        c <- newKaisuiConnection cid rel clientSock sockAddr
+        modifyTVar' (ep ^. connections) (HM.insert cid c)
+        pure c
+
+      runSimpleApp $ do
+        -- Send data message
+        let dataMsg =
+              P.DataMessage
+                { P.connectionId = convert (show cid)
+                , P.payload = "Test message"
+                }
+            envelope = Envelope{message = Just (DataMessageMessage dataMsg)}
+        liftIO $ NSB.sendAll serverSock (encodeEnvelope envelope)
+
+        -- Start receive loop for one message only
+        recvAsync <- async $ do
+          bs <- liftIO $ NSB.recv (conn ^. socket) 4096
+          case decodeEnvelope bs of
+            Left err -> error $ "Failed to decode: " <> show err
+            Right env -> case env ^. message of
+              Just (DataMessageMessage msg) ->
+                atomically $ writeTBQueue (ep ^. receiveQueue) $ NT.Received cid [msg ^. P.payload]
+              _ -> error "Unexpected message"
+
+        -- Wait for async to complete
+        wait recvAsync
+
+        -- Receive event
+        event <- atomically $ readTBQueue (ep ^. receiveQueue)
+        liftIO $ event `shouldBe` NT.Received cid ["Test message"]
+
+      -- Cleanup sockets
+      NS.close clientSock
+      NS.close serverSock
+
+    it "should handle data messages with connectionReceiveLoop" $ do
       -- Create sockets
       (clientSock, serverSock) <- NS.socketPair NS.AF_UNIX NS.Stream NS.defaultProtocol
 
