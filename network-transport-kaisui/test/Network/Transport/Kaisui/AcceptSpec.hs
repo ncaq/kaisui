@@ -39,7 +39,7 @@ spec = describe "Kaisui Accept" $ do
 
       runSimpleApp $ do
         -- Start accept loop in background
-        acceptAsync <- async $ acceptLoop ep
+        acceptAsync <- async $ noLogging $ acceptLoop ep
 
         -- Close endpoint (should cause accept loop to exit)
         atomically $ writeTVar (ep ^. closed) True

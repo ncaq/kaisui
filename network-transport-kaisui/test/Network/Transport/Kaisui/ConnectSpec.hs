@@ -26,7 +26,7 @@ spec = describe "Kaisui Connect" $ do
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
       runSimpleApp $ do
         -- Try to connect with invalid address
-        result <- connectKaisui ep (EndPointAddress "invalid-address") NT.ReliableOrdered NT.defaultConnectHints
+        result <- noLogging $ connectKaisui ep (EndPointAddress "invalid-address") NT.ReliableOrdered NT.defaultConnectHints
         case result of
           Left (NT.TransportError NT.ConnectFailed msg) ->
             liftIO $ msg `shouldContain` "Invalid address format"
@@ -41,7 +41,7 @@ spec = describe "Kaisui Connect" $ do
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
       runSimpleApp $ do
         -- Try to connect to non-existent address
-        result <- connectKaisui ep (EndPointAddress "localhost:60000:1") NT.ReliableOrdered NT.defaultConnectHints
+        result <- noLogging $ connectKaisui ep (EndPointAddress "localhost:60000:1") NT.ReliableOrdered NT.defaultConnectHints
         case result of
           Left (NT.TransportError NT.ConnectFailed _) -> pure ()
           Right _conn -> liftIO $ expectationFailure "Expected ConnectFailed error, but got successful connection"
@@ -102,7 +102,7 @@ spec = describe "Kaisui Connect" $ do
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
       runSimpleApp $ do
         -- Try invalid connection (but verify it processes reliability)
-        result <- connectKaisui ep (EndPointAddress "invalid") NT.ReliableOrdered NT.defaultConnectHints
+        result <- noLogging $ connectKaisui ep (EndPointAddress "invalid") NT.ReliableOrdered NT.defaultConnectHints
         case result of
           Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
           Right conn -> liftIO $ do
@@ -117,7 +117,7 @@ spec = describe "Kaisui Connect" $ do
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
       runSimpleApp $ do
         -- Try invalid connection (but verify it processes reliability)
-        result <- connectKaisui ep (EndPointAddress "invalid") NT.ReliableUnordered NT.defaultConnectHints
+        result <- noLogging $ connectKaisui ep (EndPointAddress "invalid") NT.ReliableUnordered NT.defaultConnectHints
         case result of
           Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
           Right conn -> liftIO $ do
@@ -132,7 +132,7 @@ spec = describe "Kaisui Connect" $ do
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
       runSimpleApp $ do
         -- Try invalid connection (but verify it processes reliability)
-        result <- connectKaisui ep (EndPointAddress "invalid") NT.Unreliable NT.defaultConnectHints
+        result <- noLogging $ connectKaisui ep (EndPointAddress "invalid") NT.Unreliable NT.defaultConnectHints
         case result of
           Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
           Right conn -> liftIO $ do
