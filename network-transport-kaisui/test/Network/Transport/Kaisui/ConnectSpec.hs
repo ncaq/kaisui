@@ -10,13 +10,11 @@ import qualified Network.Transport as NT
 import Network.Transport.Kaisui.Connect
 import Network.Transport.Kaisui.EndPoint
 import Network.Transport.Kaisui.Protocol
-import Network.Transport.Kaisui.TestHelper (TestReliability (..))
 import Network.Transport.Kaisui.Type.EndPoint
 import Proto.Kaisui.ConnectionRequest
 import Proto.Kaisui.Envelope
 import RIO
 import qualified RIO.HashMap as HM
-import Test.QuickCheck
 import Test.Syd
 
 spec :: Spec
@@ -111,24 +109,56 @@ spec = describe "Kaisui Connect" $ do
       NS.close clientSock
 
   describe "reliability handling" $ do
-    it "should handle different reliability modes"
-      $ property
-      $ \(TestReliability rel) -> do
-        sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
-        let epAddr = EndPointAddress "localhost:8080:1"
-        ep <- atomically $ createKaisuiEndPoint epAddr sock 100
+    it "should handle ReliableOrdered reliability" $ do
+      sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
+      let epAddr = EndPointAddress "localhost:8080:1"
+      ep <- atomically $ createKaisuiEndPoint epAddr sock 100
 
-        runSimpleApp $ do
-          -- Try invalid connection (but verify it processes reliability)
-          result <- connectKaisui ep (EndPointAddress "invalid") rel NT.defaultConnectHints
-          case result of
-            Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
-            Right conn -> liftIO $ do
-              NT.close conn
-              expectationFailure "Expected connection to fail with invalid address"
+      runSimpleApp $ do
+        -- Try invalid connection (but verify it processes reliability)
+        result <- connectKaisui ep (EndPointAddress "invalid") NT.ReliableOrdered NT.defaultConnectHints
+        case result of
+          Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
+          Right conn -> liftIO $ do
+            NT.close conn
+            expectationFailure "Expected connection to fail with invalid address"
 
-        -- Cleanup
-        NS.close sock
+      -- Cleanup
+      NS.close sock
+
+    it "should handle ReliableUnordered reliability" $ do
+      sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
+      let epAddr = EndPointAddress "localhost:8080:1"
+      ep <- atomically $ createKaisuiEndPoint epAddr sock 100
+
+      runSimpleApp $ do
+        -- Try invalid connection (but verify it processes reliability)
+        result <- connectKaisui ep (EndPointAddress "invalid") NT.ReliableUnordered NT.defaultConnectHints
+        case result of
+          Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
+          Right conn -> liftIO $ do
+            NT.close conn
+            expectationFailure "Expected connection to fail with invalid address"
+
+      -- Cleanup
+      NS.close sock
+
+    it "should handle Unreliable reliability" $ do
+      sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
+      let epAddr = EndPointAddress "localhost:8080:1"
+      ep <- atomically $ createKaisuiEndPoint epAddr sock 100
+
+      runSimpleApp $ do
+        -- Try invalid connection (but verify it processes reliability)
+        result <- connectKaisui ep (EndPointAddress "invalid") NT.Unreliable NT.defaultConnectHints
+        case result of
+          Left err -> logDebug $ "Connection failed as expected: " <> displayShow err
+          Right conn -> liftIO $ do
+            NT.close conn
+            expectationFailure "Expected connection to fail with invalid address"
+
+      -- Cleanup
+      NS.close sock
 
   -- createSocket and registerNewConnection are internal functions, not testing directly
 
