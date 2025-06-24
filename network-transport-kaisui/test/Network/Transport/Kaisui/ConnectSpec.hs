@@ -24,17 +24,14 @@ spec = describe "Kaisui Connect" $ do
       sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
       let epAddr = EndPointAddress "localhost:8080:1"
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
-
       runSimpleApp $ do
         -- Try to connect with invalid address
         result <- connectKaisui ep (EndPointAddress "invalid-address") NT.ReliableOrdered NT.defaultConnectHints
-
         case result of
           Left (NT.TransportError NT.ConnectFailed msg) ->
             liftIO $ msg `shouldContain` "Invalid address format"
           Right _conn -> liftIO $ expectationFailure "Expected ConnectFailed error, but got successful connection"
           Left (NT.TransportError code msg) -> liftIO $ expectationFailure $ "Expected ConnectFailed error, but got: " <> show code <> " - " <> msg
-
       -- Cleanup
       NS.close sock
 
@@ -42,16 +39,13 @@ spec = describe "Kaisui Connect" $ do
       sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
       let epAddr = EndPointAddress "localhost:8080:1"
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
-
       runSimpleApp $ do
         -- Try to connect to non-existent address
         result <- connectKaisui ep (EndPointAddress "localhost:60000:1") NT.ReliableOrdered NT.defaultConnectHints
-
         case result of
           Left (NT.TransportError NT.ConnectFailed _) -> pure ()
           Right _conn -> liftIO $ expectationFailure "Expected ConnectFailed error, but got successful connection"
           Left (NT.TransportError code msg) -> liftIO $ expectationFailure $ "Expected ConnectFailed error, but got: " <> show code <> " - " <> msg
-
       -- Cleanup
       NS.close sock
 
@@ -62,12 +56,10 @@ spec = describe "Kaisui Connect" $ do
       NS.bind serverSock (NS.SockAddrInet 0 (NS.tupleToHostAddress (127, 0, 0, 1)))
       NS.listen serverSock 5
       port <- NS.socketPort serverSock
-
       -- Create client endpoint
       clientSock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
       let epAddr = EndPointAddress "localhost:8081:1"
       ep <- atomically $ createKaisuiEndPoint epAddr clientSock 100
-
       runSimpleApp $ do
         -- Start mock server
         serverAsync <- async $ do
@@ -86,24 +78,19 @@ spec = describe "Kaisui Connect" $ do
           -- Keep socket open briefly
           threadDelay 100000
           liftIO $ NS.close connSock
-
         -- Connect to mock server
         let remoteAddr = EndPointAddress $ convert $ ("localhost:" :: Text) <> convert (show port) <> (":2" :: Text)
         result <- connectKaisui ep remoteAddr NT.ReliableOrdered NT.defaultConnectHints
-
         case result of
           Left err -> liftIO $ expectationFailure $ "Connection failed: " <> show err
           Right conn -> do
             -- Verify connection was registered
             conns <- readTVarIO (ep ^. connections)
             liftIO $ HM.size conns `shouldBe` 1
-
             -- Close connection
             liftIO $ NT.close conn
-
         -- Cleanup
         cancel serverAsync
-
       -- Cleanup
       NS.close serverSock
       NS.close clientSock
@@ -113,7 +100,6 @@ spec = describe "Kaisui Connect" $ do
       sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
       let epAddr = EndPointAddress "localhost:8080:1"
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
-
       runSimpleApp $ do
         -- Try invalid connection (but verify it processes reliability)
         result <- connectKaisui ep (EndPointAddress "invalid") NT.ReliableOrdered NT.defaultConnectHints
@@ -122,7 +108,6 @@ spec = describe "Kaisui Connect" $ do
           Right conn -> liftIO $ do
             NT.close conn
             expectationFailure "Expected connection to fail with invalid address"
-
       -- Cleanup
       NS.close sock
 
@@ -130,7 +115,6 @@ spec = describe "Kaisui Connect" $ do
       sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
       let epAddr = EndPointAddress "localhost:8080:1"
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
-
       runSimpleApp $ do
         -- Try invalid connection (but verify it processes reliability)
         result <- connectKaisui ep (EndPointAddress "invalid") NT.ReliableUnordered NT.defaultConnectHints
@@ -139,7 +123,6 @@ spec = describe "Kaisui Connect" $ do
           Right conn -> liftIO $ do
             NT.close conn
             expectationFailure "Expected connection to fail with invalid address"
-
       -- Cleanup
       NS.close sock
 
@@ -147,7 +130,6 @@ spec = describe "Kaisui Connect" $ do
       sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
       let epAddr = EndPointAddress "localhost:8080:1"
       ep <- atomically $ createKaisuiEndPoint epAddr sock 100
-
       runSimpleApp $ do
         -- Try invalid connection (but verify it processes reliability)
         result <- connectKaisui ep (EndPointAddress "invalid") NT.Unreliable NT.defaultConnectHints
@@ -156,11 +138,8 @@ spec = describe "Kaisui Connect" $ do
           Right conn -> liftIO $ do
             NT.close conn
             expectationFailure "Expected connection to fail with invalid address"
-
       -- Cleanup
       NS.close sock
-
-  -- createSocket and registerNewConnection are internal functions, not testing directly
 
   describe "connection request message format" $ do
     it "should create proper connection request envelope" $ do
@@ -174,7 +153,6 @@ spec = describe "Kaisui Connect" $ do
       -- Send request manually (sendConnectionRequest is internal)
       let request = createConnectionRequest epId rel connId
       NSB.sendAll clientSock (encodeEnvelope request)
-
       -- Receive and verify
       bs <- NSB.recv serverSock 4096
       case decodeEnvelope bs of
@@ -186,7 +164,6 @@ spec = describe "Kaisui Connect" $ do
               req ^. Proto.Kaisui.ConnectionRequest.reliability `shouldBe` 1 -- NT.ReliableOrdered
               req ^. Proto.Kaisui.ConnectionRequest.connectionId `shouldBe` convert (show connId)
             _ -> expectationFailure "Expected ConnectionRequestMessage"
-
       -- Cleanup
       NS.close clientSock
       NS.close serverSock
