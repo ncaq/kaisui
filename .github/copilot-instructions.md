@@ -16,16 +16,6 @@ Haskellのモジュールを追加した時や削除した時は、
 [cabal-gild](https://hackage.haskell.org/package/cabal-gild)によるフォーマットで変更を反映する必要があります。
 cabal-gildは統合されているので`nix fmt`で実行出来ます。
 
-#### cargo
-
-Rustのフォーマットはrustfmtだけはtreefmtが対応していますが、
-他のlinterには対応していないので以下のコマンドでチェックと自動修正を利用してください。
-
-```console
-cargo fix --allow-dirty
-cargo clippy --fix --allow-dirty
-```
-
 ### 統合チェック
 
 以下のnixコマンドで、プロジェクト全体のフォーマットチェック・ビルド・テストが行えます。
@@ -42,24 +32,12 @@ nix flake check
 cabal build --disable-optimization --enable-tests all
 ```
 
-#### Rust
-
-```console
-cargo build
-```
-
 ### テスト
 
 #### Haskell
 
 ```console
 cabal test --disable-optimization --enable-tests all
-```
-
-#### Rust
-
-```console
-cargo test
 ```
 
 ## 使用する技術スタックやライブラリ

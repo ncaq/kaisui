@@ -3,7 +3,7 @@
 ## 概要
 
 このプロジェクトkaisuiは、
-HaskellとRustなどの異なる言語のプログラムを組み合わせる方法として、
+Haskellと他の言語のプログラムを組み合わせる方法として、
 C FFIなどのメモリ共有によるものではなく、
 Erlang風のメッセージパッシングライブラリを用いて通信する方法を提供することを目指します。
 
@@ -47,22 +47,15 @@ TCP/IPなどのアドレスを指定して接続することは問題ありま�
 
 C FFIなどのForeign Function Interfaceは直接は使わなくて良いように設計します。
 
-## 通信に使うバイナリフォーマット
+## 通信に使うプロコトル
 
-[Protocol Buffer](https://protobuf.dev/)
+[QUIC](https://www.rfc-editor.org/rfc/rfc9000)
 を使います。
 
-結局どれかのフォーマットに合わせる必要があるのですが、
-ある程度規格が明示的に定義されていて、
-それなりの言語で既にライブラリが存在するものを選ぶのが適切だと考えました。
-
-パフォーマンスを無視してJSONをそのまま使うという選択肢もありますが、
-パフォーマンス以外にも例えばバイナリデータをそのまま扱うことが難しくて、
-しばしばbase64エンコードが行われたり苦しい回避策が必要になったりするので、
-今回はJSONは選ばないことにしました。
-
-また`ractor_cluster`は既にデフォルトでProtocol Bufferを使うので少しはショートカット出来て、
-ractorの設計と実装を参考にしやすくなるという現状の目標依存の理由もあります。
+どうせ暗号化は安全のために必要なので、
+TCPの上にTLSを使うことに比べて、
+最初から暗号化が組み込まれているQUICを使うことに大した追加の手間は発生しないからです。
+そしていてもQUICはTCPよりも高速な通信が期待できます。
 
 ## distributed-process
 
@@ -75,24 +68,7 @@ ractorの設計と実装を参考にしやすくなるという現状の目標�
 
 バックエンドには、
 [network-transport-tcp: TCP instantiation of Network.Transport](https://hackage.haskell.org/package/network-transport-tcp)
-を使います。
-TCPがある程度シンプルでフォーマット変換時に開発しやすいと思うからです。
-
-## ractor
-
-Rust側のメッセージパッシングライブラリはたくさんあるようでしたが、
-とりあえず、
-[ractor - crates.io: Rust Package Registry](https://crates.io/crates/ractor)
-を使います。
-
-ネットワーク通信経由で動いて安定してそうであればなんでも良かったので、
-その中でメジャーそうであまり奇をてらっていないものを選びました。
-
-バックエンドには、
-[ractor_cluster - crates.io: Rust Package Registry](https://crates.io/crates/ractor_cluster)
-を使います。
-現在まだプロダクションレディではないと書かれていますが、それは負荷テストを完全には実施していないというだけのようです。
-自前でTCPバックエンドを書いても安定性は保証されていないのは同じです。
-むしろ私個人が特急で開発したものだったらMetaの開発したものに大してだと劣ると思います。
-ractor_clusterに問題があるのであれば、自前で似たようなものを書くよりも、ractor_cluster自体を修正するべきでしょう。
-なのでこれを使って通信します。
+相当のQUICで通信する新規バックエンドを実装します。
+名前を`network-transport-quic`にすることも考えましたが、
+Cloud Haskellの標準的なシリアライズ方法を使わないので、
+`network-transport-kaisui`と命名しておくことにします。
