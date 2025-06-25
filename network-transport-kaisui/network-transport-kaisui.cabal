@@ -68,7 +68,10 @@ library
     Network.Transport.Kaisui.Addr
     Network.Transport.Kaisui.AddrInfo
     Network.Transport.Kaisui.CreateTransport
+    Network.Transport.Kaisui.EndPoint
     Network.Transport.Kaisui.Parameters
+    Network.Transport.Kaisui.Transport
+    Network.Transport.Kaisui.TransportAddrInfo
 
   hs-source-dirs: src
 

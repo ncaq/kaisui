@@ -3,14 +3,11 @@ module Network.Transport.Kaisui.Parameters
   , defaultKaisuiParameters
   ) where
 
-import Control.Lens (makeFieldsId)
-import RIO
-
 -- | Parameters for configuring Kaisui transport.
+-- 現状は設定する項目が無い。
 data KaisuiParameters
-
-makeFieldsId ''KaisuiParameters
+  = KaisuiParameters
 
 -- | Default parameters for Kaisui transport.
 defaultKaisuiParameters :: KaisuiParameters
-defaultKaisuiParameters = undefined
+defaultKaisuiParameters = KaisuiParameters
