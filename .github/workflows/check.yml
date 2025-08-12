@@ -17,7 +17,7 @@ jobs:
       LANG: C.UTF-8
       USER: runner
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - uses: cachix/install-nix-action@v31
         with:
